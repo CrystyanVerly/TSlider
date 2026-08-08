@@ -1,0 +1,86 @@
+/* reset */
+
+html,
+body,
+div,
+a,
+img,
+u,
+ul,
+li,
+section,
+video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+
+figure,
+section,
+img {
+	display: block;
+}
+
+body {
+	line-height: 1;
+}
+
+ul {
+	list-style: none;
+}
+
+/* slide items */
+
+img,
+svg {
+	width: 100%;
+	height: auto;
+	display: block;
+	object-fit: cover;
+	object-position: bottom;
+}
+
+/* essentials */
+
+/* wrapper */
+
+[data-slide='wrapper'] {
+	position: relative;
+	overflow: hidden;
+	width: 100%;
+	cursor: grab;
+	user-select: none;
+	touch-action: pan-y;
+}
+
+[data-slide='wrapper']:active {
+	cursor: grabbing;
+}
+
+/* rail */
+
+[data-slide='rail'] {
+	display: flex;
+	transition: transform 0.3s ease;
+	will-change: transform;
+}
+
+/* slide */
+
+[data-slide='slide'] {
+	flex: 0 0 100%;
+}
+
+/* slide items */
+
+[data-slide='slide'] img,
+[data-slide='slide'] svg {
+	width: 100%;
+	height: 100%;
+	display: block;
+	object-fit: cover;
+	object-position: center;
+}
