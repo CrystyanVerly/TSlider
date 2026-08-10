@@ -11,7 +11,7 @@ interface SlideOptions {
 interface Distance {
 	initial: number;
 	moving: number;
-	final: number;
+	current: number;
 }
 
 interface Position {
@@ -27,14 +27,15 @@ export default class Slide {
 	private distance: Distance = {
 		initial: 0,
 		moving: 0,
-		final: 0,
+		current: 0,
 	};
 
 	private slideIndex = 0;
 	private slideElements: HTMLElement[];
 	private slidePosition: Position[] = [];
 	private options: SlideOptions;
-	private savedPosition = 0;
+	private animationFrame: number | null = null;
+	private currentX = 0;
 
 	constructor({ wrapper, rail, options = { loop: false } }: SlideConfig) {
 		const wrapperElement = document.querySelector<HTMLElement>(wrapper);
@@ -81,15 +82,32 @@ export default class Slide {
 	}
 
 	dragMove({ clientX }: PointerEvent) {
-		const trackedDist = this.trackOnMoving(clientX);
-		this.moveItem(trackedDist, false);
-		this.distance.moving = Math.round(trackedDist - this.distance.final);
+		this.currentX = clientX;
+
+		if (this.animationFrame !== null) return;
+
+		this.animationFrame = requestAnimationFrame(() => {
+			const trackedDist = this.trackOnMoving(this.currentX);
+			this.moveItem(trackedDist, false);
+			this.distance.moving = Math.round(trackedDist - this.distance.current);
+			this.animationFrame = null;
+		});
 	}
 
 	dragEnd(e: PointerEvent) {
 		e.preventDefault();
 
-		this.distance.final = this.savedPosition;
+		if (this.animationFrame !== null) {
+			cancelAnimationFrame(this.animationFrame);
+			this.animationFrame = null;
+		}
+
+		const trackedDist = this.trackOnMoving(this.currentX);
+		this.moveItem(trackedDist);
+
+		this.distance.moving = Math.round(trackedDist - this.distance.current);
+
+		this.distance.current = trackedDist;
 
 		this.direction();
 
@@ -146,18 +164,17 @@ export default class Slide {
 		const item = this.slidePosition[index].distLeft;
 
 		this.moveItem(-item);
-		this.distance.final = -item;
+		this.distance.current = -item;
 	}
 
 	moveItem(distX: number, transition = true) {
-		this.savedPosition = distX;
 		this.rail.style.transition = transition ? `transform .3s ease` : 'none';
 		this.rail.style.transform = `translateX(${distX}px)`;
 	}
 
 	trackOnMoving(clientX: number) {
 		const calcDist = Math.round((clientX - this.distance.initial) * 1.1);
-		return this.distance.final + calcDist;
+		return this.distance.current + calcDist;
 	}
 
 	mainListener() {
