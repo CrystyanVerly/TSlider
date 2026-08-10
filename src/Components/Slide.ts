@@ -1,3 +1,5 @@
+import { debounce } from './utils/debounce';
+
 interface SlideConfig {
 	wrapper: string;
 	rail: string;
@@ -36,11 +38,15 @@ export default class Slide {
 	private slideElements: HTMLElement[];
 	private slidePosition: Position[] = [];
 	private options: SlideOptions;
+
 	private animationFrame: number | null = null;
 	private currentX = 0;
 
+	// LIFECYCLE
+
 	constructor({ wrapper, rail, options = { loop: false } }: SlideConfig) {
 		const wrapperElement = document.querySelector<HTMLElement>(wrapper);
+
 		const railElement = document.querySelector<HTMLElement>(rail);
 
 		if (!wrapperElement || !railElement)
@@ -52,44 +58,67 @@ export default class Slide {
 
 		this.wrapper = wrapperElement;
 		this.rail = railElement;
+
 		this.options = {
 			loop: false,
 			itemsPerView: 1,
-			slideBy: 'page', // page | item
+			slideBy: 'item',
 			...options,
 		};
+
 		this.binder();
 	}
 
 	init() {
 		this.mainListener();
-
-		this.setItemsPerView();
-		this.calcPosition();
-		this.setActive();
+		this.updatePosition();
 
 		return this;
 	}
 
-	binder() {
+	// EVENTS
+
+	private binder() {
 		this.dragStart = this.dragStart.bind(this);
 		this.dragMove = this.dragMove.bind(this);
 		this.dragEnd = this.dragEnd.bind(this);
+		this.onResize = debounce(this.onResize.bind(this), 200);
+		this.updatePosition = this.updatePosition.bind(this);
 	}
 
-	dragStart(e: PointerEvent) {
+	private mainListener() {
+		this.wrapper.addEventListener('pointerdown', this.dragStart);
+		window.addEventListener('resize', this.onResize);
+	}
+
+	private onResize() {
+		const currentIndex = this.slideIndex;
+
+		this.updatePosition();
+
+		const itemsPerView = this.options.itemsPerView ?? 1;
+		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
+
+		this.slideIndex = Math.min(currentIndex, maxIndex);
+
+		this.setPosition(this.slideIndex, false);
+	}
+
+	// DRAG
+
+	private dragStart(e: PointerEvent) {
 		e.preventDefault();
 
 		this.distance.initial = Math.round(e.clientX);
 		this.distance.moving = 0;
 
 		this.wrapper.setPointerCapture(e.pointerId);
-
 		this.wrapper.addEventListener('pointermove', this.dragMove);
+
 		window.addEventListener('pointerup', this.dragEnd);
 	}
 
-	dragMove({ clientX }: PointerEvent) {
+	private dragMove({ clientX }: PointerEvent) {
 		this.currentX = clientX;
 
 		if (this.animationFrame !== null) return;
@@ -102,7 +131,7 @@ export default class Slide {
 		});
 	}
 
-	dragEnd(e: PointerEvent) {
+	private dragEnd(e: PointerEvent) {
 		e.preventDefault();
 
 		if (this.animationFrame !== null) {
@@ -111,37 +140,25 @@ export default class Slide {
 		}
 
 		const trackedDist = this.trackOnMoving(this.currentX);
+
 		this.moveItem(trackedDist);
 
 		this.distance.moving = Math.round(trackedDist - this.distance.current);
-
 		this.distance.current = trackedDist;
 
 		this.direction();
 
 		this.wrapper.releasePointerCapture(e.pointerId);
 		this.wrapper.removeEventListener('pointermove', this.dragMove);
+
 		window.removeEventListener('pointerup', this.dragEnd);
 
 		this.distance.moving = 0;
 	}
 
-	prevSlide() {
-		const { itemsPerView = 1, slideBy = 'page' } = this.options;
-		const step = slideBy === 'page' ? itemsPerView : 1;
-		const prevIndex = Math.max(this.slideIndex - step, 0);
-		this.moveTo(prevIndex);
-	}
-	nextSlide() {
-		const { itemsPerView = 1, slideBy = 'page' } = this.options;
-		const step = slideBy === 'page' ? itemsPerView : 1;
-		const maxIndex = this.slideElements.length - itemsPerView;
-		const nextIndex = Math.min(this.slideIndex + step, maxIndex);
-		this.moveTo(nextIndex);
-	}
-
-	direction() {
+	private direction() {
 		const threshold = this.wrapper.offsetWidth * 0.1;
+
 		const { moving } = this.distance;
 
 		if (Math.abs(moving) <= threshold) {
@@ -157,32 +174,50 @@ export default class Slide {
 		this.prevSlide();
 	}
 
-	calcPosition() {
-		return (this.slidePosition = this.slideElements.map((slide, index) => {
-			const distLeft = slide.offsetLeft;
-			return {
-				slide,
-				distLeft,
-				index,
-			};
-		}));
+	// NAVIGATION
+
+	prevSlide() {
+		const { itemsPerView = 1, slideBy = 'page' } = this.options;
+
+		const step = slideBy === 'page' ? itemsPerView : 1;
+		const prevIndex = Math.max(this.slideIndex - step, 0);
+
+		this.moveTo(prevIndex);
 	}
 
-	setActive() {
+	nextSlide() {
+		const { itemsPerView = 1, slideBy = 'page' } = this.options;
+
+		const step = slideBy === 'page' ? itemsPerView : 1;
+		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
+		const nextIndex = Math.min(this.slideIndex + step, maxIndex);
+
+		this.moveTo(nextIndex);
+	}
+
+	moveTo(index: number) {
+		this.setPosition(index);
+	}
+
+	// VISUAL STATE
+
+	private setActive() {
 		const { itemsPerView = 1 } = this.options;
 
 		this.slideElements.forEach((slide, index) => {
 			const active =
 				index >= this.slideIndex && index < this.slideIndex + itemsPerView;
+
 			slide.classList.toggle('active', active);
 		});
 	}
 
-	setItemsPerView() {
+	// LAYOUT / POSITIONS
+
+	private setItemsPerView() {
 		const { itemsPerView = 1 } = this.options;
 
 		const gap = parseFloat(getComputedStyle(this.rail).gap) || 0;
-
 		const slideWidth =
 			(this.wrapper.offsetWidth - gap * (itemsPerView - 1)) / itemsPerView;
 
@@ -191,27 +226,53 @@ export default class Slide {
 		});
 	}
 
-	moveTo(index: number, distX?: number) {
+	private calcPosition() {
+		this.slidePosition = this.slideElements.map((slide, index) => {
+			const distLeft = slide.offsetLeft;
+
+			return {
+				slide,
+				distLeft,
+				index,
+			};
+		});
+	}
+
+	private updatePosition() {
+		this.setItemsPerView();
+		this.calcPosition();
+
+		const itemsPerView = this.options.itemsPerView ?? 1;
+		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
+
+		this.slideIndex = Math.min(this.slideIndex, maxIndex);
+
+		this.setPosition(this.slideIndex, false);
+	}
+
+	// MOVEMENT
+
+	private setPosition(index: number, transition = true) {
 		const item = this.slidePosition[index].distLeft;
 
-		this.moveItem(-item);
+		this.moveItem(-item, transition);
+
 		this.distance.current = -item;
 		this.slideIndex = index;
 
 		this.setActive();
 	}
 
-	moveItem(distX: number, transition = true) {
+	private moveItem(distX: number, transition = true) {
 		this.rail.style.transition = transition ? `transform .3s ease` : 'none';
 		this.rail.style.transform = `translateX(${distX}px)`;
 	}
 
-	trackOnMoving(clientX: number) {
-		const calcDist = Math.round((clientX - this.distance.initial) * 1.1);
-		return this.distance.current + calcDist;
-	}
+	// CALCULATIONS
 
-	mainListener() {
-		this.wrapper.addEventListener('pointerdown', this.dragStart);
+	private trackOnMoving(clientX: number) {
+		const calcDist = Math.round((clientX - this.distance.initial) * 1.1);
+
+		return this.distance.current + calcDist;
 	}
 }
