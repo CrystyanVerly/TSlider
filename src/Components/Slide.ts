@@ -6,6 +6,8 @@ interface SlideConfig {
 
 interface SlideOptions {
 	loop?: boolean;
+	itemsPerView?: number;
+	slideBy?: 'item' | 'page';
 }
 
 interface Distance {
@@ -52,14 +54,20 @@ export default class Slide {
 		this.rail = railElement;
 		this.options = {
 			loop: false,
+			itemsPerView: 1,
+			slideBy: 'page', // page | item
 			...options,
 		};
-		this.calcPosition();
 		this.binder();
 	}
 
 	init() {
 		this.mainListener();
+
+		this.setItemsPerView();
+		this.calcPosition();
+		this.setActive();
+
 		return this;
 	}
 
@@ -119,20 +127,22 @@ export default class Slide {
 	}
 
 	prevSlide() {
-		this.slideIndex--;
-
-		this.moveTo(this.slideIndex);
+		const { itemsPerView = 1, slideBy = 'page' } = this.options;
+		const step = slideBy === 'page' ? itemsPerView : 1;
+		const prevIndex = Math.max(this.slideIndex - step, 0);
+		this.moveTo(prevIndex);
 	}
 	nextSlide() {
-		this.slideIndex++;
-
-		this.moveTo(this.slideIndex);
+		const { itemsPerView = 1, slideBy = 'page' } = this.options;
+		const step = slideBy === 'page' ? itemsPerView : 1;
+		const maxIndex = this.slideElements.length - itemsPerView;
+		const nextIndex = Math.min(this.slideIndex + step, maxIndex);
+		this.moveTo(nextIndex);
 	}
 
 	direction() {
 		const threshold = this.wrapper.offsetWidth * 0.1;
 		const { moving } = this.distance;
-		console.log(this.slideIndex);
 
 		if (Math.abs(moving) <= threshold) {
 			this.moveTo(this.slideIndex);
@@ -140,13 +150,11 @@ export default class Slide {
 		}
 
 		if (moving < 0) {
-			if (this.slideIndex < this.slideElements.length - 1) this.nextSlide();
-			else this.moveTo(this.slideIndex);
+			this.nextSlide();
 			return;
 		}
 
-		if (this.slideIndex > 0) this.prevSlide();
-		else this.moveTo(this.slideIndex);
+		this.prevSlide();
 	}
 
 	calcPosition() {
@@ -160,11 +168,37 @@ export default class Slide {
 		}));
 	}
 
+	setActive() {
+		const { itemsPerView = 1 } = this.options;
+
+		this.slideElements.forEach((slide, index) => {
+			const active =
+				index >= this.slideIndex && index < this.slideIndex + itemsPerView;
+			slide.classList.toggle('active', active);
+		});
+	}
+
+	setItemsPerView() {
+		const { itemsPerView = 1 } = this.options;
+
+		const gap = parseFloat(getComputedStyle(this.rail).gap) || 0;
+
+		const slideWidth =
+			(this.wrapper.offsetWidth - gap * (itemsPerView - 1)) / itemsPerView;
+
+		this.slideElements.forEach((slide) => {
+			slide.style.flex = `0 0 ${slideWidth}px`;
+		});
+	}
+
 	moveTo(index: number, distX?: number) {
 		const item = this.slidePosition[index].distLeft;
 
 		this.moveItem(-item);
 		this.distance.current = -item;
+		this.slideIndex = index;
+
+		this.setActive();
 	}
 
 	moveItem(distX: number, transition = true) {
