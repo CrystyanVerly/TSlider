@@ -70,7 +70,12 @@ export default class Slide {
 
 	dragStart(e: PointerEvent) {
 		e.preventDefault();
+
 		this.distance.initial = Math.round(e.clientX);
+		this.distance.moving = 0;
+
+		this.wrapper.setPointerCapture(e.pointerId);
+
 		this.wrapper.addEventListener('pointermove', this.dragMove);
 		window.addEventListener('pointerup', this.dragEnd);
 	}
@@ -78,47 +83,54 @@ export default class Slide {
 	dragMove({ clientX }: PointerEvent) {
 		const trackedDist = this.trackOnMoving(clientX);
 		this.moveItem(trackedDist, false);
+		this.distance.moving = Math.round(trackedDist - this.distance.final);
 	}
 
 	dragEnd(e: PointerEvent) {
 		e.preventDefault();
+
 		this.distance.final = this.savedPosition;
+
 		this.direction();
+
 		this.wrapper.releasePointerCapture(e.pointerId);
 		this.wrapper.removeEventListener('pointermove', this.dragMove);
 		window.removeEventListener('pointerup', this.dragEnd);
+
+		this.distance.moving = 0;
 	}
 
 	prevSlide() {
-		if (this.slideIndex <= 0) return;
 		this.slideIndex--;
-		console.log(this.slideIndex);
 
 		this.moveTo(this.slideIndex);
 	}
 	nextSlide() {
-		if (this.slideIndex >= this.slideElements.length - 1) return;
 		this.slideIndex++;
-		console.log(this.slideIndex);
 
 		this.moveTo(this.slideIndex);
 	}
 
 	direction() {
-		const dragDistance = Math.round(
-			this.distance.initial - this.distance.final,
-		);
-		const threshold = this.wrapper.offsetWidth * 0.05;
-		if (Math.abs(dragDistance) <= threshold) {
+		const threshold = this.wrapper.offsetWidth * 0.1;
+		const { moving } = this.distance;
+		console.log(this.slideIndex);
+
+		if (Math.abs(moving) <= threshold) {
 			this.moveTo(this.slideIndex);
 			return;
 		}
-		if (dragDistance > 0) {
-			this.prevSlide();
-		} else {
-			this.nextSlide();
+
+		if (moving < 0) {
+			if (this.slideIndex < this.slideElements.length - 1) this.nextSlide();
+			else this.moveTo(this.slideIndex);
+			return;
 		}
+
+		if (this.slideIndex > 0) this.prevSlide();
+		else this.moveTo(this.slideIndex);
 	}
+
 	calcPosition() {
 		return (this.slidePosition = this.slideElements.map((slide, index) => {
 			const distLeft = slide.offsetLeft;
