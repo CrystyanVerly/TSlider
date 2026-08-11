@@ -42,6 +42,11 @@ export default class Slide {
 	private animationFrame: number | null = null;
 	private currentX = 0;
 
+	private originalSlides: HTMLElement[] = [];
+	private physicalSlides: HTMLElement[] = [];
+	private hasClones = false;
+	private loopDirection: 'next' | 'prev' | null = null;
+
 	// LIFECYCLE
 
 	constructor({ wrapper, rail, options = { loop: false } }: SlideConfig) {
@@ -66,6 +71,12 @@ export default class Slide {
 			...options,
 		};
 
+		this.originalSlides = Array.from(
+			railElement.querySelectorAll<HTMLElement>('[data-slide="slide"]'),
+		);
+
+		this.slideElements = [...this.originalSlides];
+
 		this.binder();
 	}
 
@@ -84,11 +95,13 @@ export default class Slide {
 		this.dragEnd = this.dragEnd.bind(this);
 		this.onResize = debounce(this.onResize.bind(this), 200);
 		this.updatePosition = this.updatePosition.bind(this);
+		this.handleTransitionEnd = this.handleTransitionEnd.bind(this);
 	}
 
 	private mainListener() {
 		this.wrapper.addEventListener('pointerdown', this.dragStart);
 		window.addEventListener('resize', this.onResize);
+		this.rail.addEventListener('transitionend', this.handleTransitionEnd);
 	}
 
 	private onResize() {
@@ -205,10 +218,28 @@ export default class Slide {
 	}
 
 	prevSlide() {
+		const { loop = false } = this.options;
+
+		if (loop && this.slideIndex === 0) {
+			this.loopDirection = 'prev';
+			this.moveToLoopClone('prev');
+			return;
+		}
+
 		this.moveTo(this.getPrevIndex());
 	}
 
 	nextSlide() {
+		const { itemsPerView = 1, loop = false } = this.options;
+
+		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
+
+		if (loop && this.slideIndex === maxIndex) {
+			this.loopDirection = 'next';
+			this.moveToLoopClone('next');
+			return;
+		}
+
 		this.moveTo(this.getNextIndex());
 	}
 
@@ -229,6 +260,86 @@ export default class Slide {
 		});
 	}
 
+	// CLONE
+
+	private createClones() {
+		if (this.hasClones) return;
+
+		const { itemsPerView = 1 } = this.options;
+
+		const before = this.originalSlides
+			.slice(-itemsPerView)
+			.map((slide) => slide.cloneNode(true) as HTMLElement);
+
+		const after = this.originalSlides
+			.slice(0, itemsPerView)
+			.map((slide) => slide.cloneNode(true) as HTMLElement);
+
+		const beforeFragment = document.createDocumentFragment();
+		const afterFragment = document.createDocumentFragment();
+
+		before.reverse().forEach((slide) => {
+			beforeFragment.prepend(slide);
+		});
+
+		after.forEach((slide) => {
+			afterFragment.append(slide);
+		});
+
+		this.rail.prepend(beforeFragment);
+		this.rail.append(afterFragment);
+
+		this.physicalSlides = Array.from(
+			this.rail.querySelectorAll<HTMLElement>('[data-slide="slide"]'),
+		);
+
+		this.hasClones = true;
+	}
+
+	private getPhysicalIndex(index: number) {
+		if (!this.options.loop) return index;
+
+		const { itemsPerView = 1 } = this.options;
+
+		return index + itemsPerView;
+	}
+
+	private moveToLoopClone(direction: 'next' | 'prev') {
+		const { itemsPerView = 1 } = this.options;
+
+		const physicalIndex =
+			direction === 'next' ? this.slidePosition.length - itemsPerView : 0;
+
+		this.moveToPhysical(physicalIndex, true);
+	}
+
+	private moveToPhysical(index: number, transition = true) {
+		const item = this.slidePosition[index].distLeft;
+
+		this.moveItem(-item, transition);
+		this.distance.current = -item;
+	}
+
+	private handleTransitionEnd(e: TransitionEvent) {
+		if (e.propertyName !== 'transform') return;
+
+		if (!this.loopDirection) return;
+
+		const direction = this.loopDirection;
+		this.loopDirection = null;
+
+		const { itemsPerView = 1 } = this.options;
+
+		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
+
+		if (direction === 'next') {
+			this.setPosition(0, false);
+			return;
+		}
+
+		this.setPosition(maxIndex, false);
+	}
+
 	// LAYOUT / POSITIONS
 
 	private setItemsPerView() {
@@ -238,24 +349,23 @@ export default class Slide {
 		const slideWidth =
 			(this.wrapper.offsetWidth - gap * (itemsPerView - 1)) / itemsPerView;
 
-		this.slideElements.forEach((slide) => {
+		this.physicalSlides.forEach((slide) => {
 			slide.style.flex = `0 0 ${slideWidth}px`;
 		});
 	}
 
 	private calcPosition() {
-		this.slidePosition = this.slideElements.map((slide, index) => {
-			const distLeft = slide.offsetLeft;
-
-			return {
-				slide,
-				distLeft,
-				index,
-			};
-		});
+		this.slidePosition = this.physicalSlides.map((slide, index) => ({
+			slide,
+			distLeft: slide.offsetLeft,
+			index,
+		}));
 	}
 
 	private updatePosition() {
+		if (this.options.loop) this.createClones();
+		else this.physicalSlides = this.originalSlides;
+
 		this.setItemsPerView();
 		this.calcPosition();
 
@@ -270,11 +380,9 @@ export default class Slide {
 	// MOVEMENT
 
 	private setPosition(index: number, transition = true) {
-		const item = this.slidePosition[index].distLeft;
+		const physicalIndex = this.getPhysicalIndex(index);
 
-		this.moveItem(-item, transition);
-
-		this.distance.current = -item;
+		this.moveToPhysical(physicalIndex, transition);
 		this.slideIndex = index;
 
 		this.setActive();

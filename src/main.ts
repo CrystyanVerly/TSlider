@@ -7,7 +7,7 @@ const slide = new Slide({
 	options: {
 		loop: true,
 		itemsPerView: 3,
-		slideBy: 'page', // page | item
+		slideBy: 'item', // page | item
 	},
 });
 slide.init();
