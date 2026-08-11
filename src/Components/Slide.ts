@@ -62,7 +62,7 @@ export default class Slide {
 		this.options = {
 			loop: false,
 			itemsPerView: 1,
-			slideBy: 'item',
+			slideBy: 'page', // page | item
 			...options,
 		};
 
@@ -176,23 +176,40 @@ export default class Slide {
 
 	// NAVIGATION
 
-	prevSlide() {
-		const { itemsPerView = 1, slideBy = 'page' } = this.options;
-
-		const step = slideBy === 'page' ? itemsPerView : 1;
-		const prevIndex = Math.max(this.slideIndex - step, 0);
-
-		this.moveTo(prevIndex);
-	}
-
-	nextSlide() {
-		const { itemsPerView = 1, slideBy = 'page' } = this.options;
+	private getPrevIndex() {
+		const { itemsPerView = 1, slideBy = 'page', loop = false } = this.options;
 
 		const step = slideBy === 'page' ? itemsPerView : 1;
 		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
-		const nextIndex = Math.min(this.slideIndex + step, maxIndex);
+		const prevIndex = this.slideIndex - step;
 
-		this.moveTo(nextIndex);
+		if (prevIndex < 0) {
+			return loop ? maxIndex : 0;
+		}
+
+		return prevIndex;
+	}
+
+	private getNextIndex() {
+		const { itemsPerView = 1, slideBy = 'page', loop = false } = this.options;
+
+		const step = slideBy === 'page' ? itemsPerView : 1;
+		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
+		const nextIndex = this.slideIndex + step;
+
+		if (nextIndex > maxIndex) {
+			return loop ? 0 : maxIndex;
+		}
+
+		return nextIndex;
+	}
+
+	prevSlide() {
+		this.moveTo(this.getPrevIndex());
+	}
+
+	nextSlide() {
+		this.moveTo(this.getNextIndex());
 	}
 
 	moveTo(index: number) {
