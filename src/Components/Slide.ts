@@ -47,6 +47,8 @@ export default class Slide {
 	private hasClones = false;
 	private loopDirection: 'next' | 'prev' | null = null;
 	private isLoopTransitioning = false;
+	private isAnimating = false;
+	private readonly animationDuration = 300;
 
 	// LIFECYCLE
 
@@ -112,7 +114,7 @@ export default class Slide {
 	// DRAG
 
 	private dragStart(e: PointerEvent) {
-		if (this.isLoopTransitioning) return;
+		if (this.isAnimating) return;
 
 		e.preventDefault();
 
@@ -222,45 +224,75 @@ export default class Slide {
 	}
 
 	prevSlide() {
-		if (this.isLoopTransitioning) return;
+		if (this.isAnimating) return;
+
+		this.isAnimating = true;
+
 		const { loop = false } = this.options;
 		const indexes = this.getNavigationIndexes();
 
 		const currentPosition = indexes.indexOf(this.slideIndex);
 
-		if (currentPosition === -1) return;
+		if (currentPosition === -1) {
+			this.isAnimating = false;
+			return;
+		}
 
 		const isFirst = currentPosition === 0;
 
 		if (loop && isFirst) {
 			this.moveToLoopClone('prev');
+
+			setTimeout(() => {
+				this.isAnimating = false;
+			}, this.animationDuration);
+
 			return;
 		}
 
 		const prevPosition = Math.max(currentPosition - 1, 0);
 
 		this.moveTo(indexes[prevPosition]);
+
+		setTimeout(() => {
+			this.isAnimating = false;
+		}, this.animationDuration);
 	}
 
 	nextSlide() {
-		if (this.isLoopTransitioning) return;
+		if (this.isAnimating) return;
+
+		this.isAnimating = true;
+
 		const { loop = false } = this.options;
 		const indexes = this.getNavigationIndexes();
 
 		const currentPosition = indexes.indexOf(this.slideIndex);
 
-		if (currentPosition === -1) return;
+		if (currentPosition === -1) {
+			this.isAnimating = false;
+			return;
+		}
 
 		const isLast = currentPosition === indexes.length - 1;
 
 		if (loop && isLast) {
 			this.moveToLoopClone('next');
+
+			setTimeout(() => {
+				this.isAnimating = false;
+			}, this.animationDuration);
+
 			return;
 		}
 
 		const nextPosition = Math.min(currentPosition + 1, indexes.length - 1);
 
 		this.moveTo(indexes[nextPosition]);
+
+		setTimeout(() => {
+			this.isAnimating = false;
+		}, this.animationDuration);
 	}
 
 	moveTo(index: number) {
