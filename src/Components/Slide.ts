@@ -285,12 +285,12 @@ export default class Slide {
 
 	// VISUAL STATE
 
-	private setActive() {
+	private setActive(physicalIndex = this.getPhysicalIndex(this.slideIndex)) {
 		const { itemsPerView = 1 } = this.options;
 
-		this.slideElements.forEach((slide, index) => {
+		this.physicalSlides.forEach((slide, index) => {
 			const active =
-				index >= this.slideIndex && index < this.slideIndex + itemsPerView;
+				index >= physicalIndex && index < physicalIndex + itemsPerView;
 
 			slide.classList.toggle('active', active);
 		});
@@ -363,6 +363,7 @@ export default class Slide {
 			return;
 		}
 
+		this.setActive(targetPhysicalIndex);
 		this.moveToPhysical(targetPhysicalIndex, true);
 	}
 
@@ -446,7 +447,7 @@ export default class Slide {
 		this.moveToPhysical(physicalIndex, transition);
 		this.slideIndex = index;
 
-		this.setActive();
+		this.setActive(physicalIndex);
 	}
 
 	private moveItem(distX: number, transition = true) {
