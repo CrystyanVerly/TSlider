@@ -64,7 +64,6 @@ svg {
 
 [data-slide='rail'] {
 	display: flex;
-	transition: transform 0.3s ease;
 	will-change: transform;
 }
 

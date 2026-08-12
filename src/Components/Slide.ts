@@ -113,6 +113,14 @@ export default class Slide {
 
 	// DRAG
 
+	private lockInteraction() {
+		this.isAnimating = true;
+
+		setTimeout(() => {
+			this.isAnimating = false;
+		}, this.animationDuration);
+	}
+
 	private dragStart(e: PointerEvent) {
 		if (this.isAnimating) return;
 
@@ -226,73 +234,49 @@ export default class Slide {
 	prevSlide() {
 		if (this.isAnimating) return;
 
-		this.isAnimating = true;
+		this.lockInteraction();
 
 		const { loop = false } = this.options;
 		const indexes = this.getNavigationIndexes();
 
 		const currentPosition = indexes.indexOf(this.slideIndex);
 
-		if (currentPosition === -1) {
-			this.isAnimating = false;
-			return;
-		}
+		if (currentPosition === -1) return;
 
 		const isFirst = currentPosition === 0;
 
 		if (loop && isFirst) {
 			this.moveToLoopClone('prev');
-
-			setTimeout(() => {
-				this.isAnimating = false;
-			}, this.animationDuration);
-
 			return;
 		}
 
 		const prevPosition = Math.max(currentPosition - 1, 0);
 
 		this.moveTo(indexes[prevPosition]);
-
-		setTimeout(() => {
-			this.isAnimating = false;
-		}, this.animationDuration);
 	}
 
 	nextSlide() {
 		if (this.isAnimating) return;
 
-		this.isAnimating = true;
+		this.lockInteraction();
 
 		const { loop = false } = this.options;
 		const indexes = this.getNavigationIndexes();
 
 		const currentPosition = indexes.indexOf(this.slideIndex);
 
-		if (currentPosition === -1) {
-			this.isAnimating = false;
-			return;
-		}
+		if (currentPosition === -1) return;
 
 		const isLast = currentPosition === indexes.length - 1;
 
 		if (loop && isLast) {
 			this.moveToLoopClone('next');
-
-			setTimeout(() => {
-				this.isAnimating = false;
-			}, this.animationDuration);
-
 			return;
 		}
 
 		const nextPosition = Math.min(currentPosition + 1, indexes.length - 1);
 
 		this.moveTo(indexes[nextPosition]);
-
-		setTimeout(() => {
-			this.isAnimating = false;
-		}, this.animationDuration);
 	}
 
 	moveTo(index: number) {
@@ -466,7 +450,9 @@ export default class Slide {
 	}
 
 	private moveItem(distX: number, transition = true) {
-		this.rail.style.transition = transition ? `transform .3s ease` : 'none';
+		this.rail.style.transition = transition
+			? `transform .${this.animationDuration / 100}s ease`
+			: 'none';
 		this.rail.style.transform = `translateX(${distX}px)`;
 	}
 
