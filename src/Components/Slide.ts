@@ -46,6 +46,7 @@ export default class Slide {
 	private physicalSlides: HTMLElement[] = [];
 	private hasClones = false;
 	private loopDirection: 'next' | 'prev' | null = null;
+	private isLoopTransitioning = false;
 
 	// LIFECYCLE
 
@@ -120,10 +121,14 @@ export default class Slide {
 	// DRAG
 
 	private dragStart(e: PointerEvent) {
+		if (this.isLoopTransitioning) return;
+
 		e.preventDefault();
 
 		this.distance.initial = Math.round(e.clientX);
 		this.distance.moving = 0;
+
+		this.currentX = e.clientX;
 
 		this.wrapper.setPointerCapture(e.pointerId);
 		this.wrapper.addEventListener('pointermove', this.dragMove);
@@ -189,58 +194,71 @@ export default class Slide {
 
 	// NAVIGATION
 
-	private getPrevIndex() {
-		const { itemsPerView = 1, slideBy = 'page', loop = false } = this.options;
+	private getNavigationIndexes() {
+		const total = this.originalSlides.length;
+		const itemsPerView = Math.min(this.options.itemsPerView ?? 1, total);
+		const { slideBy = 'page', loop = false } = this.options;
 
-		const step = slideBy === 'page' ? itemsPerView : 1;
-		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
-		const prevIndex = this.slideIndex - step;
+		if (!total) return [0];
+		if (loop && slideBy === 'item')
+			return Array.from({ length: total }, (_, index) => index);
 
-		if (prevIndex < 0) {
-			return loop ? maxIndex : 0;
+		const maxIndex = Math.max(total - itemsPerView, 0);
+
+		if (slideBy === 'item') {
+			return Array.from({ length: maxIndex + 1 }, (_, index) => index);
 		}
 
-		return prevIndex;
-	}
+		const indexes: number[] = [];
 
-	private getNextIndex() {
-		const { itemsPerView = 1, slideBy = 'page', loop = false } = this.options;
+		for (let index = 0; index <= maxIndex; index += itemsPerView)
+			indexes.push(index);
 
-		const step = slideBy === 'page' ? itemsPerView : 1;
-		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
-		const nextIndex = this.slideIndex + step;
+		if (indexes[indexes.length - 1] !== maxIndex) indexes.push(maxIndex);
 
-		if (nextIndex > maxIndex) {
-			return loop ? 0 : maxIndex;
-		}
-
-		return nextIndex;
+		return indexes;
 	}
 
 	prevSlide() {
+		if (this.isLoopTransitioning) return;
 		const { loop = false } = this.options;
+		const indexes = this.getNavigationIndexes();
 
-		if (loop && this.slideIndex === 0) {
-			this.loopDirection = 'prev';
+		const currentPosition = indexes.indexOf(this.slideIndex);
+
+		if (currentPosition === -1) return;
+
+		const isFirst = currentPosition === 0;
+
+		if (loop && isFirst) {
 			this.moveToLoopClone('prev');
 			return;
 		}
 
-		this.moveTo(this.getPrevIndex());
+		const prevPosition = Math.max(currentPosition - 1, 0);
+
+		this.moveTo(indexes[prevPosition]);
 	}
 
 	nextSlide() {
-		const { itemsPerView = 1, loop = false } = this.options;
+		if (this.isLoopTransitioning) return;
+		const { loop = false } = this.options;
+		const indexes = this.getNavigationIndexes();
 
-		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
+		const currentPosition = indexes.indexOf(this.slideIndex);
 
-		if (loop && this.slideIndex === maxIndex) {
-			this.loopDirection = 'next';
+		if (currentPosition === -1) return;
+
+		const isLast = currentPosition === indexes.length - 1;
+
+		if (loop && isLast) {
 			this.moveToLoopClone('next');
 			return;
 		}
 
-		this.moveTo(this.getNextIndex());
+		const nextPosition = Math.min(currentPosition + 1, indexes.length - 1);
+
+		this.moveTo(indexes[nextPosition]);
 	}
 
 	moveTo(index: number) {
@@ -305,12 +323,29 @@ export default class Slide {
 	}
 
 	private moveToLoopClone(direction: 'next' | 'prev') {
-		const { itemsPerView = 1 } = this.options;
+		if (this.isLoopTransitioning) return;
 
-		const physicalIndex =
-			direction === 'next' ? this.slidePosition.length - itemsPerView : 0;
+		this.isLoopTransitioning = true;
+		this.loopDirection = direction;
 
-		this.moveToPhysical(physicalIndex, true);
+		const { itemsPerView = 1, slideBy = 'page' } = this.options;
+
+		const step = slideBy === 'page' ? itemsPerView : 1;
+		const currentPhysicalIndex = this.getPhysicalIndex(this.slideIndex);
+
+		const targetPhysicalIndex =
+			direction === 'next'
+				? currentPhysicalIndex + step
+				: currentPhysicalIndex - step;
+
+		const targetX = -this.slidePosition[targetPhysicalIndex].distLeft;
+
+		if (Math.round(this.distance.current) === Math.round(targetX)) {
+			this.finishLoopTransition();
+			return;
+		}
+
+		this.moveToPhysical(targetPhysicalIndex, true);
 	}
 
 	private moveToPhysical(index: number, transition = true) {
@@ -320,24 +355,31 @@ export default class Slide {
 		this.distance.current = -item;
 	}
 
-	private handleTransitionEnd(e: TransitionEvent) {
-		if (e.propertyName !== 'transform') return;
-
+	private finishLoopTransition() {
 		if (!this.loopDirection) return;
 
 		const direction = this.loopDirection;
-		this.loopDirection = null;
 
-		const { itemsPerView = 1 } = this.options;
-
-		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
-
-		if (direction === 'next') {
-			this.setPosition(0, false);
+		if (!direction) {
+			this.isLoopTransitioning = false;
 			return;
 		}
+		const indexes = this.getNavigationIndexes();
+		const targetIndex =
+			direction === 'next' ? indexes[0] : indexes[indexes.length - 1];
 
-		this.setPosition(maxIndex, false);
+		this.loopDirection = null;
+
+		this.setPosition(targetIndex, false);
+
+		this.isLoopTransitioning = false;
+	}
+
+	private handleTransitionEnd(e: TransitionEvent) {
+		if (e.target !== this.rail) return;
+		if (e.propertyName !== 'transform') return;
+		if (!this.loopDirection) return;
+		this.finishLoopTransition();
 	}
 
 	// LAYOUT / POSITIONS
