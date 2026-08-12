@@ -106,16 +106,7 @@ export default class Slide {
 	}
 
 	private onResize() {
-		const currentIndex = this.slideIndex;
-
-		this.updatePosition();
-
-		const itemsPerView = this.options.itemsPerView ?? 1;
-		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
-
-		this.slideIndex = Math.min(currentIndex, maxIndex);
-
-		this.setPosition(this.slideIndex, false);
+		this.updatePosition(this.slideIndex);
 	}
 
 	// DRAG
@@ -131,8 +122,8 @@ export default class Slide {
 		this.currentX = e.clientX;
 
 		this.wrapper.setPointerCapture(e.pointerId);
-		this.wrapper.addEventListener('pointermove', this.dragMove);
 
+		this.wrapper.addEventListener('pointermove', this.dragMove);
 		window.addEventListener('pointerup', this.dragEnd);
 	}
 
@@ -193,6 +184,17 @@ export default class Slide {
 	}
 
 	// NAVIGATION
+
+	private getClosesNavigationIndex(currentIndex: number, indexes: number[]) {
+		if (!indexes.length) return 0;
+
+		return indexes.reduce((closest, index) => {
+			const currentDistance = Math.abs(index - currentIndex);
+			const closestDistance = Math.abs(closest - currentIndex);
+
+			return currentDistance < closestDistance ? index : closest;
+		});
+	}
 
 	private getNavigationIndexes() {
 		const total = this.originalSlides.length;
@@ -404,7 +406,7 @@ export default class Slide {
 		}));
 	}
 
-	private updatePosition() {
+	private updatePosition(preferredIndex = this.slideIndex) {
 		if (this.options.loop) this.createClones();
 		else this.physicalSlides = this.originalSlides;
 
@@ -413,9 +415,11 @@ export default class Slide {
 
 		const indexes = this.getNavigationIndexes();
 
-		if (!indexes.includes(this.slideIndex)) this.slideIndex = indexes[0] ?? 0;
+		const nextIndex = indexes.includes(preferredIndex)
+			? preferredIndex
+			: this.getClosesNavigationIndex(preferredIndex, indexes);
 
-		this.setPosition(this.slideIndex, false);
+		this.setPosition(nextIndex, false);
 	}
 
 	// MOVEMENT
