@@ -159,7 +159,7 @@ export default class Slide {
 
 		const trackedDist = this.trackOnMoving(this.currentX);
 
-		this.moveItem(trackedDist);
+		this.moveItem(trackedDist, false);
 
 		this.distance.moving = Math.round(trackedDist - this.distance.current);
 		this.distance.current = trackedDist;
@@ -411,10 +411,9 @@ export default class Slide {
 		this.setItemsPerView();
 		this.calcPosition();
 
-		const itemsPerView = this.options.itemsPerView ?? 1;
-		const maxIndex = Math.max(this.slideElements.length - itemsPerView, 0);
+		const indexes = this.getNavigationIndexes();
 
-		this.slideIndex = Math.min(this.slideIndex, maxIndex);
+		if (!indexes.includes(this.slideIndex)) this.slideIndex = indexes[0] ?? 0;
 
 		this.setPosition(this.slideIndex, false);
 	}
