@@ -103,8 +103,9 @@ export default class Slide {
 
 	init() {
 		this.mainListener();
-		this.updatePosition();
 		this.createControls();
+		this.updatePosition();
+
 		return this;
 	}
 
@@ -425,10 +426,56 @@ export default class Slide {
 		const dots =
 			this.wrapper.querySelectorAll<HTMLButtonElement>('[data-slide-dot]');
 
+		if (!dots) return;
+
 		const currentIndex = this.getCurrentNavigationIndex();
 		dots.forEach((dot, index) => {
 			dot.toggleAttribute('data-active', index === currentIndex);
 		});
+	}
+
+	private updatePagination() {
+		const current = this.wrapper.querySelector<HTMLElement>(
+			'[data-slide-pagination-current]',
+		);
+
+		const total = this.wrapper.querySelector<HTMLElement>(
+			'[data-slide-pagination-total]',
+		);
+
+		if (!current || !total) return;
+
+		const indexes = this.getNavigationIndexes();
+		const currentIndex = this.getCurrentNavigationIndex();
+
+		current.textContent = String(currentIndex + 1);
+		total.textContent = String(indexes.length);
+	}
+
+	private updateArrows() {
+		const prev = this.wrapper.querySelector<HTMLButtonElement>(
+			'[data-slide-arrow="prev"]',
+		);
+
+		const next = this.wrapper.querySelector<HTMLButtonElement>(
+			'[data-slide-arrow="next"]',
+		);
+
+		if (!prev || !next) return;
+
+		const { loop = false } = this.options;
+
+		const indexes = this.getNavigationIndexes();
+		const currentIndex = this.getCurrentNavigationIndex();
+
+		prev.disabled = !loop && currentIndex === 0;
+		next.disabled = !loop && currentIndex === indexes.length - 1;
+	}
+
+	private updateControls() {
+		this.updateArrows();
+		this.updateDots();
+		this.updatePagination();
 	}
 
 	// VISUAL STATE
@@ -596,7 +643,7 @@ export default class Slide {
 		this.slideIndex = index;
 
 		this.setActive(physicalIndex);
-		this.updateDots();
+		this.updateControls();
 	}
 
 	private moveItem(distX: number, transition = true) {

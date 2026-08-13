@@ -365,7 +365,7 @@ svg {
 	bottom: 1.5rem;
 
 	display: flex;
-	align-items: center;
+	align-items: baseline;
 
 	gap: 0.35rem;
 
