@@ -8,6 +8,9 @@ const slide = new Slide({
 		loop: true,
 		itemsPerView: 3,
 		slideBy: 'item', // page | item
+		controls: {
+			arrows: true,
+		},
 	},
 });
 slide.init();

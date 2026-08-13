@@ -10,6 +10,7 @@ interface SlideOptions {
 	loop?: boolean;
 	itemsPerView?: number;
 	slideBy?: 'item' | 'page';
+	controls?: ControlsOptions;
 }
 
 interface Distance {
@@ -22,6 +23,12 @@ interface Position {
 	slide: HTMLElement;
 	distLeft: number;
 	index: number;
+}
+
+interface ControlsOptions {
+	arrows?: boolean;
+	dots?: boolean;
+	pagination?: boolean;
 }
 
 export default class Slide {
@@ -50,6 +57,8 @@ export default class Slide {
 	private isAnimating = false;
 	private readonly animationDuration = 300;
 
+	private controlsElement: HTMLElement | null = null;
+
 	// LIFECYCLE
 
 	constructor({ wrapper, rail, options = { loop: false } }: SlideConfig) {
@@ -72,6 +81,12 @@ export default class Slide {
 			itemsPerView: 1,
 			slideBy: 'page', // page | item
 			...options,
+			controls: {
+				arrows: false,
+				dots: false,
+				pagination: false,
+				...options.controls,
+			},
 		};
 
 		this.originalSlides = Array.from(
@@ -86,7 +101,7 @@ export default class Slide {
 	init() {
 		this.mainListener();
 		this.updatePosition();
-
+		this.createControls();
 		return this;
 	}
 
@@ -281,6 +296,47 @@ export default class Slide {
 
 	moveTo(index: number) {
 		this.setPosition(index);
+	}
+
+	// CONTROLS
+
+	private createControls() {
+		const {
+			arrows = false,
+			dots = false,
+			pagination = false,
+		} = this.options.controls ?? {};
+
+		if (!arrows && !dots && !pagination) return;
+
+		const controls = document.createElement('div');
+		controls.dataset.slideControls = '';
+
+		this.controlsElement = controls;
+		this.wrapper.append(controls);
+
+		if (arrows) this.createArrows(controls);
+	}
+
+	private createArrows(parent: HTMLElement) {
+		const prev = document.createElement('button');
+		const next = document.createElement('button');
+
+		prev.type = 'button';
+		next.type = 'button';
+
+		prev.dataset.slideArrow = 'prev';
+		next.dataset.slideArrow = 'next';
+
+		prev.setAttribute('aria-label', 'previous slide');
+		next.setAttribute('aria-label', 'next slide');
+
+		prev.innerHTML = '';
+		next.innerHTML = '';
+
+		prev.addEventListener('click', () => this.prevSlide());
+		next.addEventListener('click', () => this.nextSlide());
+		parent.append(prev, next);
 	}
 
 	// VISUAL STATE
