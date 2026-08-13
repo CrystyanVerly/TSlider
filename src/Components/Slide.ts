@@ -316,6 +316,7 @@ export default class Slide {
 		this.wrapper.append(controls);
 
 		if (arrows) this.createArrows(controls);
+		if (dots) this.createDots(controls);
 	}
 
 	private createArrows(parent: HTMLElement) {
@@ -337,6 +338,31 @@ export default class Slide {
 		prev.addEventListener('click', () => this.prevSlide());
 		next.addEventListener('click', () => this.nextSlide());
 		parent.append(prev, next);
+	}
+
+	private createDots(parent: HTMLElement) {
+		const dots = document.createElement('div');
+
+		dots.dataset.slideDots = '';
+
+		const indexes = this.getNavigationIndexes();
+
+		indexes.forEach((index, dotIndex) => {
+			const dot = document.createElement('button');
+
+			dot.type = 'button';
+			dot.dataset.slideDot = '';
+
+			dot.setAttribute('aria-label', `Ir para a posição ${dotIndex + 1}`);
+
+			dot.addEventListener('click', () => {
+				this.moveTo(index);
+			});
+
+			dots.append(dot);
+		});
+
+		parent.append(dots);
 	}
 
 	// VISUAL STATE

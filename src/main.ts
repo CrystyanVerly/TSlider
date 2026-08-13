@@ -10,6 +10,7 @@ const slide = new Slide({
 		slideBy: 'item', // page | item
 		controls: {
 			arrows: true,
+			dots: true,
 		},
 	},
 });
