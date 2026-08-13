@@ -1,4 +1,24 @@
-/* reset */
+/* ============================================================
+   SLIDE — STRUCTURAL STYLES
+   ============================================================
+
+   ⚠️ DO NOT MODIFY
+
+   This section contains styles required for the structural
+   operation of the library.
+
+   The structure and behavior are defined by Slide.ts.
+
+   If you want to customize the slider's appearance,
+   use ONLY the section:
+
+   "SLIDE — CUSTOMIZABLE STYLES"
+
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   RESET
+   ------------------------------------------------------------ */
 
 html,
 body,
@@ -9,7 +29,9 @@ u,
 ul,
 li,
 section,
-video {
+video,
+button,
+span {
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -32,7 +54,9 @@ ul {
 	list-style: none;
 }
 
-/* slide items */
+/* ------------------------------------------------------------
+   SLIDE MEDIA
+   ------------------------------------------------------------ */
 
 img,
 svg {
@@ -43,14 +67,15 @@ svg {
 	object-position: bottom;
 }
 
-/* essentials */
-
-/* wrapper */
+/* ------------------------------------------------------------
+   WRAPPER
+   ------------------------------------------------------------ */
 
 [data-slide='wrapper'] {
 	position: relative;
 	overflow: hidden;
 	width: 100%;
+
 	cursor: grab;
 	user-select: none;
 	touch-action: pan-y;
@@ -60,27 +85,309 @@ svg {
 	cursor: grabbing;
 }
 
-/* rail */
+/* ------------------------------------------------------------
+   RAIL
+   ------------------------------------------------------------ */
 
 [data-slide='rail'] {
 	display: flex;
 	will-change: transform;
 }
 
-/* slide */
+/* ------------------------------------------------------------
+   SLIDE
+   ------------------------------------------------------------ */
 
 [data-slide='slide'] {
 	flex: 0 0 100%;
 	height: 80vh;
 }
 
-/* slide items */
+/* ------------------------------------------------------------
+   SLIDE MEDIA
+   ------------------------------------------------------------ */
 
 [data-slide='slide'] img,
 [data-slide='slide'] svg {
 	width: 100%;
 	height: 100%;
 	display: block;
+
 	object-fit: cover;
 	object-position: center;
+}
+
+/* ============================================================
+   SLIDE — CUSTOMIZABLE STYLES
+   ============================================================
+
+   ✅ CAN BE MODIFIED
+
+   This section contains ONLY visual styles.
+
+   You can freely change:
+
+   - colors
+   - sizes
+   - spacing
+   - borders
+   - transparency
+   - blur
+   - shadows
+   - visual position of controls
+   - transitions
+   - state appearance
+
+   There is no need to modify Slide.ts to customize
+   the appearance of the controls.
+
+   The data-slide-* attributes are part of the library's
+   structure and must not be removed or renamed.
+
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   THEME
+
+   Change ONLY these variables to modify the main
+   control colors.
+
+   Arrows and dots use the same color to remain
+   visually synchronized.
+   ------------------------------------------------------------ */
+
+:root {
+	--slide-control-color: rgb(255 255 255);
+	--slide-control-background: rgb(255 255 255 / 0.12);
+	--slide-control-border: rgb(255 255 255 / 0.18);
+
+	--slide-control-opacity: 0.9;
+	--slide-control-inactive-opacity: 0.35;
+
+	--slide-control-hover-background: rgb(255 255 255 / 0.2);
+	--slide-control-disabled-opacity: 0.35;
+}
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+
+[data-slide-controls] {
+	position: absolute;
+	inset: 0;
+
+	pointer-events: none;
+}
+
+/* ============================================================
+   ARROWS
+   ============================================================ */
+
+[data-slide-arrows] {
+	position: absolute;
+	inset: 0;
+
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	padding: 0 1.5rem;
+
+	pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   ARROW BUTTON
+   ------------------------------------------------------------ */
+
+[data-slide-arrow] {
+	display: grid;
+	place-items: center;
+
+	width: 2.5rem;
+	height: 2.5rem;
+
+	padding: 0;
+
+	border: 1px solid var(--slide-control-border);
+	border-radius: 50%;
+
+	background: var(--slide-control-background);
+
+	color: var(--slide-control-color);
+
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+
+	cursor: pointer;
+	pointer-events: auto;
+
+	transition:
+		opacity 0.2s ease,
+		background 0.2s ease,
+		transform 0.2s ease;
+}
+
+/* ------------------------------------------------------------
+   ARROW HOVER
+   ------------------------------------------------------------ */
+
+[data-slide-arrow]:hover:not(:disabled) {
+	background: var(--slide-control-hover-background);
+}
+
+/* ------------------------------------------------------------
+   ARROW DISABLED
+   ------------------------------------------------------------ */
+
+[data-slide-arrow]:disabled {
+	opacity: var(--slide-control-disabled-opacity);
+	cursor: default;
+}
+
+/* ------------------------------------------------------------
+   ARROW ICON
+
+   The SVG is applied by Slide.ts through a CSS mask.
+
+   The color comes from:
+   --slide-control-color
+   ------------------------------------------------------------ */
+
+[data-slide-arrow-icon] {
+	display: block;
+
+	width: 1rem;
+	height: 1rem;
+
+	background-color: currentColor;
+
+	mask-image: var(--slide-arrow-icon);
+	mask-position: center;
+	mask-repeat: no-repeat;
+	mask-size: contain;
+
+	-webkit-mask-image: var(--slide-arrow-icon);
+	-webkit-mask-position: center;
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+}
+
+/* ============================================================
+   DOTS
+   ============================================================ */
+
+[data-slide-dots] {
+	position: absolute;
+
+	left: 50%;
+	bottom: 1.5rem;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	gap: 0.5rem;
+
+	transform: translateX(-50%);
+
+	pointer-events: auto;
+}
+
+/* ------------------------------------------------------------
+   DOT BUTTON
+   ------------------------------------------------------------ */
+
+[data-slide-dot] {
+	display: grid;
+	place-items: center;
+
+	width: 1rem;
+	height: 1rem;
+
+	padding: 0;
+
+	border: 0;
+
+	background: transparent;
+
+	color: var(--slide-control-color);
+
+	cursor: pointer;
+}
+
+/* ------------------------------------------------------------
+   DOT ICON
+   ------------------------------------------------------------ */
+
+[data-slide-dot-icon] {
+	display: block;
+
+	width: 0.5rem;
+	height: 0.5rem;
+
+	background-color: currentColor;
+
+	mask-image: var(--slide-dot-icon);
+	mask-position: center;
+	mask-repeat: no-repeat;
+	mask-size: contain;
+
+	-webkit-mask-image: var(--slide-dot-icon);
+	-webkit-mask-position: center;
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+
+	opacity: var(--slide-control-inactive-opacity);
+
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease;
+}
+
+/* ------------------------------------------------------------
+   DOT ACTIVE
+   ------------------------------------------------------------ */
+
+[data-slide-dot][data-active] [data-slide-dot-icon] {
+	opacity: var(--slide-control-opacity);
+	transform: scale(1.25);
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+
+[data-slide-pagination] {
+	position: absolute;
+
+	left: 1.5rem;
+	bottom: 1.5rem;
+
+	display: flex;
+	align-items: center;
+
+	gap: 0.35rem;
+
+	color: var(--slide-control-color);
+
+	pointer-events: auto;
+}
+
+/* ------------------------------------------------------------
+   PAGINATION VALUES
+   ------------------------------------------------------------ */
+
+[data-slide-pagination-current],
+[data-slide-pagination-total] {
+	font-size: 0.875rem;
+	line-height: 1;
+}
+
+/* ------------------------------------------------------------
+   PAGINATION SEPARATOR
+   ------------------------------------------------------------ */
+
+[data-slide-pagination-separator] {
+	opacity: 0.5;
 }

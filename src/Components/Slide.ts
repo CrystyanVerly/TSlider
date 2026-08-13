@@ -1,4 +1,7 @@
 import { debounce } from './utils/debounce';
+import arrowLeft from '../assets/controls/arrow-left.svg';
+import arrowRight from '../assets/controls/arrow-right.svg';
+import dotNavigation from '../assets/controls/dots-navigation.svg';
 
 interface SlideConfig {
 	wrapper: string;
@@ -138,6 +141,10 @@ export default class Slide {
 
 	private dragStart(e: PointerEvent) {
 		if (this.isAnimating) return;
+
+		const target = e.target as HTMLElement;
+
+		if (target.closest('[data-slide-controls]')) return;
 
 		e.preventDefault();
 
@@ -321,6 +328,10 @@ export default class Slide {
 	}
 
 	private createArrows(parent: HTMLElement) {
+		const arrows = document.createElement('div');
+
+		arrows.dataset.slideArrows = '';
+
 		const prev = document.createElement('button');
 		const next = document.createElement('button');
 
@@ -333,13 +344,24 @@ export default class Slide {
 		prev.setAttribute('aria-label', 'previous slide');
 		next.setAttribute('aria-label', 'next slide');
 
-		prev.innerHTML = '';
-		next.innerHTML = '';
+		const prevIcon = document.createElement('span');
+		const nextIcon = document.createElement('span');
+
+		prevIcon.dataset.slideArrowIcon = '';
+		nextIcon.dataset.slideArrowIcon = '';
+
+		prevIcon.style.setProperty('--slide-arrow-icon', `url("${arrowLeft}")`);
+
+		nextIcon.style.setProperty('--slide-arrow-icon', `url("${arrowRight}")`);
+
+		prev.append(prevIcon);
+		next.append(nextIcon);
 
 		prev.addEventListener('click', () => this.prevSlide());
 		next.addEventListener('click', () => this.nextSlide());
 
-		parent.append(prev, next);
+		arrows.append(prev, next);
+		parent.append(arrows);
 	}
 
 	private createDots(parent: HTMLElement) {
@@ -351,9 +373,19 @@ export default class Slide {
 
 		indexes.forEach((index, dotIndex) => {
 			const dot = document.createElement('button');
+
 			dot.type = 'button';
 			dot.dataset.slideDot = '';
-			dot.setAttribute('aria-label', `Ir para a posição ${dotIndex + 1}`);
+
+			dot.setAttribute('aria-label', `go to position: ${dotIndex + 1}`);
+
+			const icon = document.createElement('span');
+
+			icon.dataset.slideDotIcon = '';
+
+			icon.style.setProperty('--slide-dot-icon', `url("${dotNavigation}")`);
+
+			dot.append(icon);
 
 			dot.addEventListener('click', () => {
 				this.moveTo(index);
@@ -381,6 +413,22 @@ export default class Slide {
 
 		pagination.append(current, separator, total);
 		parent.append(pagination);
+	}
+
+	private getCurrentNavigationIndex() {
+		const indexes = this.getNavigationIndexes();
+		const currentIndex = indexes.indexOf(this.slideIndex);
+		return currentIndex >= 0 ? currentIndex : 0;
+	}
+
+	private updateDots() {
+		const dots =
+			this.wrapper.querySelectorAll<HTMLButtonElement>('[data-slide-dot]');
+
+		const currentIndex = this.getCurrentNavigationIndex();
+		dots.forEach((dot, index) => {
+			dot.toggleAttribute('data-active', index === currentIndex);
+		});
 	}
 
 	// VISUAL STATE
@@ -548,6 +596,7 @@ export default class Slide {
 		this.slideIndex = index;
 
 		this.setActive(physicalIndex);
+		this.updateDots();
 	}
 
 	private moveItem(distX: number, transition = true) {
