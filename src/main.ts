@@ -11,6 +11,7 @@ const slide = new Slide({
 		controls: {
 			arrows: true,
 			dots: true,
+			pagination: true,
 		},
 	},
 });

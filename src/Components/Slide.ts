@@ -317,6 +317,7 @@ export default class Slide {
 
 		if (arrows) this.createArrows(controls);
 		if (dots) this.createDots(controls);
+		if (pagination) this.createPagination(controls);
 	}
 
 	private createArrows(parent: HTMLElement) {
@@ -337,6 +338,7 @@ export default class Slide {
 
 		prev.addEventListener('click', () => this.prevSlide());
 		next.addEventListener('click', () => this.nextSlide());
+
 		parent.append(prev, next);
 	}
 
@@ -349,10 +351,8 @@ export default class Slide {
 
 		indexes.forEach((index, dotIndex) => {
 			const dot = document.createElement('button');
-
 			dot.type = 'button';
 			dot.dataset.slideDot = '';
-
 			dot.setAttribute('aria-label', `Ir para a posição ${dotIndex + 1}`);
 
 			dot.addEventListener('click', () => {
@@ -363,6 +363,24 @@ export default class Slide {
 		});
 
 		parent.append(dots);
+	}
+
+	private createPagination(parent: HTMLElement) {
+		const pagination = document.createElement('div');
+		pagination.dataset.slidePagination = '';
+
+		const current = document.createElement('span');
+		const separator = document.createElement('span');
+		const total = document.createElement('span');
+
+		current.dataset.slidePaginationCurrent = '';
+		separator.dataset.slidePaginationSeparator = '';
+		total.dataset.slidePaginationTotal = '';
+
+		separator.textContent = '|';
+
+		pagination.append(current, separator, total);
+		parent.append(pagination);
 	}
 
 	// VISUAL STATE
