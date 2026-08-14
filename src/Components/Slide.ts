@@ -521,7 +521,7 @@ export default class Slide {
 		this.updatePagination();
 	}
 
-	// AUTO PLAY
+	// AUTOPLAY
 
 	private startAutoplay() {
 		const { enabled = false, delay = 3000 } = this.options.autoplay ?? {};
@@ -530,6 +530,15 @@ export default class Slide {
 		this.stopAutoplay();
 
 		this.autoPlayTimer = window.setTimeout(() => {
+			const indexes = this.getNavigationIndexes();
+			const currentPosition = indexes.indexOf(this.slideIndex);
+			const isLast = currentPosition === indexes.length - 1;
+
+			if (!this.options.loop && isLast) {
+				this.stopAutoplay();
+				return;
+			}
+
 			this.nextSlide();
 			this.startAutoplay();
 		}, delay);

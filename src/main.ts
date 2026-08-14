@@ -5,7 +5,7 @@ const slide = new Slide({
 	wrapper: `[data-slide="wrapper"]`,
 	rail: `[data-slide="rail"]`,
 	options: {
-		loop: true,
+		loop: false,
 		itemsPerView: 3,
 		slideBy: 'item', // page | item
 		controls: {
