@@ -215,10 +215,6 @@ export default class Slide {
 
 	private lockInteraction() {
 		this.isAnimating = true;
-
-		setTimeout(() => {
-			this.isAnimating = false;
-		}, this.animationDuration);
 	}
 
 	private dragStart(e: PointerEvent) {
@@ -837,7 +833,11 @@ export default class Slide {
 	private handleTransitionEnd(e: TransitionEvent) {
 		if (e.target !== this.rail) return;
 		if (e.propertyName !== 'transform') return;
+
+		this.isAnimating = false;
+
 		if (!this.loopDirection) return;
+
 		this.finishLoopTransition();
 	}
 
