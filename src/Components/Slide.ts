@@ -70,6 +70,7 @@ export default class Slide {
 
 	private controlsElement: HTMLElement | null = null;
 	private autoPlayTimer: number | null = null;
+	private isHovering = false;
 
 	// LIFECYCLE
 
@@ -143,6 +144,17 @@ export default class Slide {
 		this.wrapper.addEventListener('pointerdown', this.dragStart);
 		window.addEventListener('resize', this.onResize);
 		this.rail.addEventListener('transitionend', this.handleTransitionEnd);
+
+		if (this.options.autoplay?.pauseOnHover) {
+			this.wrapper.addEventListener('mouseenter', () => {
+				this.isHovering = true;
+				this.pauseAutoplay();
+			});
+			this.wrapper.addEventListener('mouseleave', () => {
+				this.isHovering = false;
+				this.restartAutoplay();
+			});
+		}
 	}
 
 	private onResize() {
@@ -216,7 +228,7 @@ export default class Slide {
 		window.removeEventListener('pointerup', this.dragEnd);
 
 		this.distance.moving = 0;
-		this.restartAutoplay();
+		if (!this.isHovering) this.restartAutoplay();
 	}
 
 	private direction() {
