@@ -5,7 +5,7 @@ const slide = new Slide({
 	wrapper: `[data-slide="wrapper"]`,
 	rail: `[data-slide="rail"]`,
 	options: {
-		loop: false,
+		loop: true,
 		itemsPerView: 3,
 		slideBy: 'item', // page | item
 		controls: {
@@ -16,6 +16,7 @@ const slide = new Slide({
 		autoplay: {
 			enabled: true,
 			pauseOnHover: true,
+			delay: 2000,
 		},
 	},
 });

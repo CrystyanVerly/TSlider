@@ -71,6 +71,7 @@ export default class Slide {
 	private controlsElement: HTMLElement | null = null;
 	private autoPlayTimer: number | null = null;
 	private isHovering = false;
+	private autoplayRestartTimer: number | null = null;
 
 	// LIFECYCLE
 
@@ -152,7 +153,7 @@ export default class Slide {
 			});
 			this.wrapper.addEventListener('mouseleave', () => {
 				this.isHovering = false;
-				this.restartAutoplay();
+				this.resumeAutoplay();
 			});
 		}
 	}
@@ -228,7 +229,7 @@ export default class Slide {
 		window.removeEventListener('pointerup', this.dragEnd);
 
 		this.distance.moving = 0;
-		if (!this.isHovering) this.restartAutoplay();
+		if (!this.isHovering) this.resumeAutoplay();
 	}
 
 	private direction() {
@@ -394,12 +395,12 @@ export default class Slide {
 		prev.addEventListener('click', () => {
 			this.pauseAutoplay();
 			this.prevSlide();
-			this.restartAutoplay();
+			this.resumeAutoplay();
 		});
 		next.addEventListener('click', () => {
 			this.pauseAutoplay();
 			this.nextSlide();
-			this.restartAutoplay();
+			this.resumeAutoplay();
 		});
 
 		arrows.append(prev, next);
@@ -432,7 +433,7 @@ export default class Slide {
 			dot.addEventListener('click', () => {
 				this.pauseAutoplay();
 				this.moveTo(index);
-				this.restartAutoplay();
+				this.resumeAutoplay();
 			});
 
 			dots.append(dot);
@@ -554,9 +555,16 @@ export default class Slide {
 		this.stopAutoplay();
 	}
 
-	private restartAutoplay() {
+	private resumeAutoplay() {
 		this.stopAutoplay();
-		window.setTimeout(() => {
+
+		if (this.options.autoplay?.pauseOnHover && this.isHovering) return;
+
+		if (this.autoplayRestartTimer !== null)
+			clearTimeout(this.autoplayRestartTimer);
+
+		this.autoplayRestartTimer = window.setTimeout(() => {
+			this.autoplayRestartTimer = null;
 			this.startAutoplay();
 		}, this.animationDuration);
 	}
