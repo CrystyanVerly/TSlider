@@ -74,6 +74,16 @@ export default class Slide {
 
 	private autoPlayTimer: number | null = null;
 	private isHovering = false;
+	private handleMouseEnter = () => {
+		this.isHovering = true;
+		this.pauseAutoplay();
+		this.updateAutoplayControl();
+	};
+	private handleMouseLeave = () => {
+		this.isHovering = false;
+		this.resumeAutoplay();
+		this.updateAutoplayControl();
+	};
 	private autoplayRestartTimer: number | null = null;
 	private isAutoplayPaused = false;
 
@@ -138,6 +148,41 @@ export default class Slide {
 		return this;
 	}
 
+	destroy() {
+		this.stopAutoplay();
+
+		if (this.autoplayRestartTimer !== null) {
+			clearTimeout(this.autoplayRestartTimer);
+			this.autoplayRestartTimer = null;
+		}
+
+		if (this.animationFrame !== null) {
+			cancelAnimationFrame(this.animationFrame);
+			this.animationFrame = null;
+		}
+
+		this.visibilityObserver?.disconnect();
+		this.visibilityObserver = null;
+
+		this.wrapper.removeEventListener('pointerdown', this.dragStart);
+		this.wrapper.removeEventListener('pointermove', this.dragMove);
+		this.wrapper.removeEventListener('mouseenter', this.handleMouseEnter);
+		this.wrapper.removeEventListener('mouseleave', this.handleMouseLeave);
+
+		window.removeEventListener('resize', this.onResize);
+		window.removeEventListener('pointerup', this.dragEnd);
+
+		this.rail.removeEventListener('transitionend', this.handleTransitionEnd);
+
+		document.removeEventListener(
+			'visibilitychange',
+			this.handleVisibilityChange,
+		);
+
+		this.controlsElement?.remove();
+		this.controlsElement = null;
+	}
+
 	// EVENTS
 
 	private binder() {
@@ -156,16 +201,8 @@ export default class Slide {
 		this.rail.addEventListener('transitionend', this.handleTransitionEnd);
 
 		if (this.options.autoplay?.pauseOnHover) {
-			this.wrapper.addEventListener('mouseenter', () => {
-				this.isHovering = true;
-				this.pauseAutoplay();
-				this.updateAutoplayControl();
-			});
-			this.wrapper.addEventListener('mouseleave', () => {
-				this.isHovering = false;
-				this.resumeAutoplay();
-				this.updateAutoplayControl();
-			});
+			this.wrapper.addEventListener('mouseenter', this.handleMouseEnter);
+			this.wrapper.addEventListener('mouseleave', this.handleMouseLeave);
 		}
 		document.addEventListener('visibilitychange', this.handleVisibilityChange);
 	}
