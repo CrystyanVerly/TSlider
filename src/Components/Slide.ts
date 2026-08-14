@@ -71,10 +71,14 @@ export default class Slide {
 	private readonly animationDuration = 300;
 
 	private controlsElement: HTMLElement | null = null;
+
 	private autoPlayTimer: number | null = null;
 	private isHovering = false;
 	private autoplayRestartTimer: number | null = null;
 	private isAutoplayPaused = false;
+
+	private isVisible = true;
+	private visibilityObserver: IntersectionObserver | null = null;
 
 	// LIFECYCLE
 
@@ -128,6 +132,7 @@ export default class Slide {
 		this.mainListener();
 		this.createControls();
 		this.updatePosition();
+		this.observeVisibility();
 		this.startAutoplay();
 
 		return this;
@@ -142,6 +147,7 @@ export default class Slide {
 		this.onResize = debounce(this.onResize.bind(this), 200);
 		this.updatePosition = this.updatePosition.bind(this);
 		this.handleTransitionEnd = this.handleTransitionEnd.bind(this);
+		this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
 	}
 
 	private mainListener() {
@@ -161,6 +167,7 @@ export default class Slide {
 				this.updateAutoplayControl();
 			});
 		}
+		document.addEventListener('visibilitychange', this.handleVisibilityChange);
 	}
 
 	private onResize() {
@@ -257,7 +264,7 @@ export default class Slide {
 
 	// NAVIGATION
 
-	private getClosesNavigationIndex(currentIndex: number, indexes: number[]) {
+	private getClosestNavigationIndex(currentIndex: number, indexes: number[]) {
 		if (!indexes.length) return 0;
 
 		return indexes.reduce((closest, index) => {
@@ -533,10 +540,20 @@ export default class Slide {
 
 	// AUTOPLAY
 
-	private startAutoplay() {
-		const { enabled = false, delay = 3000 } = this.options.autoplay ?? {};
+	private canAutoplay() {
+		return (
+			this.options.autoplay?.enabled &&
+			!this.isAutoplayPaused &&
+			this.isVisible &&
+			!(this.options.autoplay?.pauseOnHover && this.isHovering)
+		);
+	}
 
-		if (!enabled || this.isAutoplayPaused) return;
+	private startAutoplay() {
+		if (!this.canAutoplay()) return;
+
+		const { delay = 3000 } = this.options.autoplay ?? {};
+
 		this.stopAutoplay();
 
 		this.autoPlayTimer = window.setTimeout(() => {
@@ -567,9 +584,7 @@ export default class Slide {
 	private resumeAutoplay() {
 		this.stopAutoplay();
 
-		if (this.isAutoplayPaused) return;
-
-		if (this.options.autoplay?.pauseOnHover && this.isHovering) return;
+		if (!this.canAutoplay()) return;
 
 		if (this.autoplayRestartTimer !== null)
 			clearTimeout(this.autoplayRestartTimer);
@@ -578,6 +593,30 @@ export default class Slide {
 			this.autoplayRestartTimer = null;
 			this.startAutoplay();
 		}, this.animationDuration);
+	}
+
+	private observeVisibility() {
+		this.visibilityObserver = new IntersectionObserver(
+			([entry]) => {
+				this.isVisible = entry.isIntersecting;
+
+				if (this.isVisible) {
+					this.resumeAutoplay();
+				} else {
+					this.pauseAutoplay();
+				}
+			},
+			{
+				threshold: 0,
+			},
+		);
+
+		this.visibilityObserver.observe(this.wrapper);
+	}
+
+	private handleVisibilityChange() {
+		if (document.visibilityState === 'visible') this.resumeAutoplay();
+		else this.pauseAutoplay();
 	}
 
 	// AUTOPLAY CONTROL
@@ -798,7 +837,7 @@ export default class Slide {
 
 		const nextIndex = indexes.includes(preferredIndex)
 			? preferredIndex
-			: this.getClosesNavigationIndex(preferredIndex, indexes);
+			: this.getClosestNavigationIndex(preferredIndex, indexes);
 
 		this.setPosition(nextIndex, false);
 	}
