@@ -2,6 +2,8 @@ import { debounce } from './utils/debounce';
 import arrowLeft from '../assets/controls/arrow-left.svg';
 import arrowRight from '../assets/controls/arrow-right.svg';
 import dotNavigation from '../assets/controls/dots-navigation.svg';
+import playIcon from '../assets/controls/play.svg';
+import pauseIcon from '../assets/controls/pause.svg';
 
 interface SlideConfig {
 	wrapper: string;
@@ -72,6 +74,7 @@ export default class Slide {
 	private autoPlayTimer: number | null = null;
 	private isHovering = false;
 	private autoplayRestartTimer: number | null = null;
+	private isAutoplayPaused = false;
 
 	// LIFECYCLE
 
@@ -150,10 +153,12 @@ export default class Slide {
 			this.wrapper.addEventListener('mouseenter', () => {
 				this.isHovering = true;
 				this.pauseAutoplay();
+				this.updateAutoplayControl();
 			});
 			this.wrapper.addEventListener('mouseleave', () => {
 				this.isHovering = false;
 				this.resumeAutoplay();
+				this.updateAutoplayControl();
 			});
 		}
 	}
@@ -349,9 +354,12 @@ export default class Slide {
 			pagination = false,
 		} = this.options.controls ?? {};
 
-		if (!arrows && !dots && !pagination) return;
+		const autoplay = this.options.autoplay?.controls ?? false;
+
+		if (!arrows && !dots && !pagination && !autoplay) return;
 
 		const controls = document.createElement('div');
+
 		controls.dataset.slideControls = '';
 
 		this.controlsElement = controls;
@@ -360,6 +368,7 @@ export default class Slide {
 		if (arrows) this.createArrows(controls);
 		if (dots) this.createDots(controls);
 		if (pagination) this.createPagination(controls);
+		if (autoplay) this.createAutoplayControls(controls);
 	}
 
 	private createArrows(parent: HTMLElement) {
@@ -527,7 +536,7 @@ export default class Slide {
 	private startAutoplay() {
 		const { enabled = false, delay = 3000 } = this.options.autoplay ?? {};
 
-		if (!enabled) return;
+		if (!enabled || this.isAutoplayPaused) return;
 		this.stopAutoplay();
 
 		this.autoPlayTimer = window.setTimeout(() => {
@@ -558,6 +567,8 @@ export default class Slide {
 	private resumeAutoplay() {
 		this.stopAutoplay();
 
+		if (this.isAutoplayPaused) return;
+
 		if (this.options.autoplay?.pauseOnHover && this.isHovering) return;
 
 		if (this.autoplayRestartTimer !== null)
@@ -567,6 +578,73 @@ export default class Slide {
 			this.autoplayRestartTimer = null;
 			this.startAutoplay();
 		}, this.animationDuration);
+	}
+
+	// AUTOPLAY CONTROL
+
+	private createAutoplayControls(parent: HTMLElement) {
+		const controls = document.createElement('div');
+
+		controls.dataset.slideAutoplayControls = '';
+
+		this.createAutoplayButton(controls);
+
+		parent.append(controls);
+	}
+
+	private createAutoplayButton(parent: HTMLElement) {
+		const button = document.createElement('button');
+
+		button.type = 'button';
+		button.dataset.slideAutoplay = '';
+
+		const play = document.createElement('span');
+		const pause = document.createElement('span');
+
+		play.dataset.slideAutoplayIcon = 'play';
+		pause.dataset.slideAutoplayIcon = 'pause';
+
+		play.style.setProperty('--slide-autoplay-icon', `url("${playIcon}")`);
+
+		pause.style.setProperty('--slide-autoplay-icon', `url("${pauseIcon}")`);
+
+		button.append(play, pause);
+
+		button.addEventListener('click', () => {
+			this.isAutoplayPaused = !this.isAutoplayPaused;
+
+			if (this.isAutoplayPaused) {
+				this.pauseAutoplay();
+			} else {
+				this.resumeAutoplay();
+			}
+
+			this.updateAutoplayControl();
+		});
+
+		parent.append(button);
+
+		this.updateAutoplayControl();
+	}
+
+	private updateAutoplayControl() {
+		const button = this.wrapper.querySelector<HTMLElement>(
+			'[data-slide-autoplay]',
+		);
+
+		if (!button) return;
+
+		const paused =
+			this.isAutoplayPaused ||
+			(this.options.autoplay?.pauseOnHover && this.isHovering);
+
+		button.toggleAttribute('data-paused', paused);
+		button.toggleAttribute('data-hovering', this.isHovering);
+
+		button.setAttribute(
+			'aria-label',
+			paused ? 'play autoplay' : 'pause autoplay',
+		);
 	}
 
 	// VISUAL STATE

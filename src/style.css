@@ -1,7 +1,4 @@
-/* ============================================================
-   SLIDE — STRUCTURAL STYLES
-   ============================================================
-
+/* SLIDE — STRUCTURAL STYLES
    ⚠️ DO NOT MODIFY
 
    This section contains styles required for the structural
@@ -13,12 +10,9 @@
    use ONLY the section:
 
    "SLIDE — CUSTOMIZABLE STYLES"
+*/
 
-   ============================================================ */
-
-/* ------------------------------------------------------------
-   RESET
-   ------------------------------------------------------------ */
+/* RESET */
 
 html,
 body,
@@ -54,9 +48,7 @@ ul {
 	list-style: none;
 }
 
-/* ------------------------------------------------------------
-   SLIDE MEDIA
-   ------------------------------------------------------------ */
+/* SLIDE MEDIA */
 
 img,
 svg {
@@ -67,9 +59,7 @@ svg {
 	object-position: bottom;
 }
 
-/* ------------------------------------------------------------
-   WRAPPER
-   ------------------------------------------------------------ */
+/* WRAPPER */
 
 [data-slide='wrapper'] {
 	position: relative;
@@ -85,27 +75,21 @@ svg {
 	cursor: grabbing;
 }
 
-/* ------------------------------------------------------------
-   RAIL
-   ------------------------------------------------------------ */
+/* RAIL */
 
 [data-slide='rail'] {
 	display: flex;
 	will-change: transform;
 }
 
-/* ------------------------------------------------------------
-   SLIDE
-   ------------------------------------------------------------ */
+/* SLIDE */
 
 [data-slide='slide'] {
 	flex: 0 0 100%;
 	height: 80vh;
 }
 
-/* ------------------------------------------------------------
-   SLIDE MEDIA
-   ------------------------------------------------------------ */
+/* SLIDE MEDIA */
 
 [data-slide='slide'] img,
 [data-slide='slide'] svg {
@@ -117,10 +101,7 @@ svg {
 	object-position: center;
 }
 
-/* ============================================================
-   SLIDE — CUSTOMIZABLE STYLES
-   ============================================================
-
+/* SLIDE — CUSTOMIZABLE STYLES
    ✅ CAN BE MODIFIED
 
    This section contains ONLY visual styles.
@@ -143,18 +124,17 @@ svg {
 
    The data-slide-* attributes are part of the library's
    structure and must not be removed or renamed.
+*/
 
-   ============================================================ */
-
-/* ------------------------------------------------------------
-   THEME
+/* 
+	THEME
 
    Change ONLY these variables to modify the main
    control colors.
 
    Arrows and dots use the same color to remain
-   visually synchronized.
-   ------------------------------------------------------------ */
+   visually synchronized. 
+*/
 
 :root {
 	--slide-control-color: rgb(255 255 255);
@@ -168,9 +148,7 @@ svg {
 	--slide-control-disabled-opacity: 0.35;
 }
 
-/* ============================================================
-   CONTROLS
-   ============================================================ */
+/* CONTROLS */
 
 [data-slide-controls] {
 	position: absolute;
@@ -179,9 +157,7 @@ svg {
 	pointer-events: none;
 }
 
-/* ============================================================
-   ARROWS
-   ============================================================ */
+/* ARROWS */
 
 [data-slide-arrows] {
 	position: absolute;
@@ -196,9 +172,7 @@ svg {
 	pointer-events: none;
 }
 
-/* ------------------------------------------------------------
-   ARROW BUTTON
-   ------------------------------------------------------------ */
+/* ARROW BUTTON */
 
 [data-slide-arrow] {
 	display: grid;
@@ -228,31 +202,27 @@ svg {
 		transform 0.2s ease;
 }
 
-/* ------------------------------------------------------------
-   ARROW HOVER
-   ------------------------------------------------------------ */
+/* ARROW HOVER */
 
 [data-slide-arrow]:hover:not(:disabled) {
 	background: var(--slide-control-hover-background);
 }
 
-/* ------------------------------------------------------------
-   ARROW DISABLED
-   ------------------------------------------------------------ */
+/* ARROW DISABLED */
 
 [data-slide-arrow]:disabled {
 	opacity: var(--slide-control-disabled-opacity);
 	cursor: default;
 }
 
-/* ------------------------------------------------------------
-   ARROW ICON
+/* 
+	ARROW ICON
 
    The SVG is applied by Slide.ts through a CSS mask.
 
    The color comes from:
-   --slide-control-color
-   ------------------------------------------------------------ */
+   --slide-control-color 
+*/
 
 [data-slide-arrow-icon] {
 	display: block;
@@ -273,9 +243,7 @@ svg {
 	-webkit-mask-size: contain;
 }
 
-/* ============================================================
-   DOTS
-   ============================================================ */
+/* DOTS */
 
 [data-slide-dots] {
 	position: absolute;
@@ -294,9 +262,7 @@ svg {
 	pointer-events: auto;
 }
 
-/* ------------------------------------------------------------
-   DOT BUTTON
-   ------------------------------------------------------------ */
+/* DOT BUTTON */
 
 [data-slide-dot] {
 	display: grid;
@@ -316,9 +282,7 @@ svg {
 	cursor: pointer;
 }
 
-/* ------------------------------------------------------------
-   DOT ICON
-   ------------------------------------------------------------ */
+/* DOT ICON */
 
 [data-slide-dot-icon] {
 	display: block;
@@ -345,18 +309,14 @@ svg {
 		transform 0.2s ease;
 }
 
-/* ------------------------------------------------------------
-   DOT ACTIVE
-   ------------------------------------------------------------ */
+/* DOT ACTIVE */
 
 [data-slide-dot][data-active] [data-slide-dot-icon] {
 	opacity: var(--slide-control-opacity);
 	transform: scale(1.25);
 }
 
-/* ============================================================
-   PAGINATION
-   ============================================================ */
+/* PAGINATION */
 
 [data-slide-pagination] {
 	position: absolute;
@@ -374,9 +334,7 @@ svg {
 	pointer-events: auto;
 }
 
-/* ------------------------------------------------------------
-   PAGINATION VALUES
-   ------------------------------------------------------------ */
+/* PAGINATION VALUES */
 
 [data-slide-pagination-current],
 [data-slide-pagination-total] {
@@ -384,10 +342,113 @@ svg {
 	line-height: 1;
 }
 
-/* ------------------------------------------------------------
-   PAGINATION SEPARATOR
-   ------------------------------------------------------------ */
-
+/* PAGINATION SEPARATOR */
 [data-slide-pagination-separator] {
 	opacity: 0.5;
+}
+
+/* AUTOPLAY */
+
+[data-slide-autoplay-controls] {
+	position: absolute;
+
+	right: 1.5rem;
+	bottom: 1.5rem;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	pointer-events: auto;
+}
+
+/* AUTOPLAY BUTTON*/
+
+[data-slide-autoplay] {
+	position: relative;
+
+	display: grid;
+	place-items: center;
+
+	width: 2.5rem;
+	height: 2.5rem;
+
+	padding: 0;
+
+	border: 0;
+	border-radius: 50%;
+
+	background: transparent;
+
+	color: var(--slide-control-color);
+
+	cursor: pointer;
+}
+
+/* AUTOPLAY ICON */
+
+[data-slide-autoplay-icon] {
+	position: absolute;
+
+	display: block;
+
+	width: 100%;
+	height: 100%;
+
+	background-color: currentColor;
+
+	mask-image: var(--slide-autoplay-icon);
+	mask-position: center;
+	mask-repeat: no-repeat;
+	mask-size: contain;
+
+	-webkit-mask-image: var(--slide-autoplay-icon);
+	-webkit-mask-position: center;
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease;
+}
+
+/* PLAY / PAUSE STATE */
+
+[data-slide-autoplay-icon='play'] {
+	opacity: 0;
+	transform: scale(0.8);
+}
+
+[data-slide-autoplay-icon='pause'] {
+	opacity: var(--slide-control-opacity);
+	transform: scale(1);
+}
+
+/* PAUSED */
+
+[data-slide-autoplay][data-paused] [data-slide-autoplay-icon='play'] {
+	opacity: var(--slide-control-opacity);
+	transform: scale(1);
+}
+
+[data-slide-autoplay][data-paused] [data-slide-autoplay-icon='pause'] {
+	opacity: 0;
+	transform: scale(0.8);
+}
+
+[data-slide-autoplay][data-hovering] {
+	animation: slide-autoplay-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes slide-autoplay-breathe {
+	0%,
+	100% {
+		transform: scale(1);
+		filter: brightness(1);
+	}
+
+	50% {
+		transform: scale(1.08);
+		filter: brightness(1.15);
+	}
 }

@@ -17,6 +17,7 @@ const slide = new Slide({
 			enabled: true,
 			pauseOnHover: true,
 			delay: 2000,
+			controls: true,
 		},
 	},
 });
