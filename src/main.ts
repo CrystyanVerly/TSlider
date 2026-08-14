@@ -13,6 +13,9 @@ const slide = new Slide({
 			dots: true,
 			pagination: true,
 		},
+		autoplay: {
+			enabled: true,
+		},
 	},
 });
 slide.init();

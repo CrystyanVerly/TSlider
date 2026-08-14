@@ -14,6 +14,7 @@ interface SlideOptions {
 	itemsPerView?: number;
 	slideBy?: 'item' | 'page';
 	controls?: ControlsOptions;
+	autoplay?: AutoPlayOptions;
 }
 
 interface Distance {
@@ -32,6 +33,13 @@ interface ControlsOptions {
 	arrows?: boolean;
 	dots?: boolean;
 	pagination?: boolean;
+}
+
+interface AutoPlayOptions {
+	enabled?: boolean;
+	delay?: number;
+	pauseOnHover?: boolean;
+	controls?: boolean;
 }
 
 export default class Slide {
@@ -61,6 +69,7 @@ export default class Slide {
 	private readonly animationDuration = 300;
 
 	private controlsElement: HTMLElement | null = null;
+	private autoPlayTimer: number | null = null;
 
 	// LIFECYCLE
 
@@ -84,11 +93,20 @@ export default class Slide {
 			itemsPerView: 1,
 			slideBy: 'page', // page | item
 			...options,
+
 			controls: {
 				arrows: false,
 				dots: false,
 				pagination: false,
 				...options.controls,
+			},
+
+			autoplay: {
+				enabled: false,
+				delay: 3000,
+				pauseOnHover: true,
+				controls: false,
+				...options.autoplay,
 			},
 		};
 
@@ -105,6 +123,7 @@ export default class Slide {
 		this.mainListener();
 		this.createControls();
 		this.updatePosition();
+		this.startAutoplay();
 
 		return this;
 	}
@@ -142,6 +161,7 @@ export default class Slide {
 
 	private dragStart(e: PointerEvent) {
 		if (this.isAnimating) return;
+		this.pauseAutoplay();
 
 		const target = e.target as HTMLElement;
 
@@ -196,6 +216,7 @@ export default class Slide {
 		window.removeEventListener('pointerup', this.dragEnd);
 
 		this.distance.moving = 0;
+		this.restartAutoplay();
 	}
 
 	private direction() {
@@ -358,8 +379,16 @@ export default class Slide {
 		prev.append(prevIcon);
 		next.append(nextIcon);
 
-		prev.addEventListener('click', () => this.prevSlide());
-		next.addEventListener('click', () => this.nextSlide());
+		prev.addEventListener('click', () => {
+			this.pauseAutoplay();
+			this.prevSlide();
+			this.restartAutoplay();
+		});
+		next.addEventListener('click', () => {
+			this.pauseAutoplay();
+			this.nextSlide();
+			this.restartAutoplay();
+		});
 
 		arrows.append(prev, next);
 		parent.append(arrows);
@@ -389,7 +418,9 @@ export default class Slide {
 			dot.append(icon);
 
 			dot.addEventListener('click', () => {
+				this.pauseAutoplay();
 				this.moveTo(index);
+				this.restartAutoplay();
 			});
 
 			dots.append(dot);
@@ -476,6 +507,37 @@ export default class Slide {
 		this.updateArrows();
 		this.updateDots();
 		this.updatePagination();
+	}
+
+	// AUTO PLAY
+
+	private startAutoplay() {
+		const { enabled = false, delay = 3000 } = this.options.autoplay ?? {};
+
+		if (!enabled) return;
+		this.stopAutoplay();
+
+		this.autoPlayTimer = window.setTimeout(() => {
+			this.nextSlide();
+			this.startAutoplay();
+		}, delay);
+	}
+
+	private stopAutoplay() {
+		if (this.autoPlayTimer === null) return;
+		clearTimeout(this.autoPlayTimer);
+		this.autoPlayTimer = null;
+	}
+
+	private pauseAutoplay() {
+		this.stopAutoplay();
+	}
+
+	private restartAutoplay() {
+		this.stopAutoplay();
+		window.setTimeout(() => {
+			this.startAutoplay();
+		}, this.animationDuration);
 	}
 
 	// VISUAL STATE
