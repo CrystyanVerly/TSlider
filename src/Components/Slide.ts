@@ -90,6 +90,8 @@ export default class Slide {
 	private isVisible = true;
 	private visibilityObserver: IntersectionObserver | null = null;
 
+	private prefersReducedMotion = false;
+
 	// LIFECYCLE
 
 	constructor({ wrapper, rail, options = { loop: false } }: SlideConfig) {
@@ -140,6 +142,8 @@ export default class Slide {
 
 	init() {
 		this.wrapper.setAttribute('tabindex', '0');
+
+		this.checkReducedMotion();
 
 		this.mainListener();
 		this.createControls();
@@ -594,6 +598,7 @@ export default class Slide {
 		return (
 			this.options.autoplay?.enabled &&
 			!this.isAutoplayPaused &&
+			!this.prefersReducedMotion &&
 			this.isVisible &&
 			!(this.options.autoplay?.pauseOnHover && this.isHovering)
 		);
@@ -942,5 +947,11 @@ export default class Slide {
 		if (e.key === 'ArrowRight') {
 			this.nextSlide();
 		}
+	}
+
+	private checkReducedMotion() {
+		this.prefersReducedMotion = window.matchMedia(
+			'(prefers-reduced-motion: reduce)',
+		).matches;
 	}
 }
