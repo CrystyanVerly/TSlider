@@ -139,6 +139,8 @@ export default class Slide {
 	}
 
 	init() {
+		this.wrapper.setAttribute('tabindex', '0');
+
 		this.mainListener();
 		this.createControls();
 		this.updatePosition();
@@ -165,8 +167,13 @@ export default class Slide {
 		this.visibilityObserver = null;
 
 		this.wrapper.removeEventListener('pointerdown', this.dragStart);
+
 		this.wrapper.removeEventListener('pointermove', this.dragMove);
+
+		this.wrapper.removeEventListener('keydown', this.handleKeyDown);
+
 		this.wrapper.removeEventListener('mouseenter', this.handleMouseEnter);
+
 		this.wrapper.removeEventListener('mouseleave', this.handleMouseLeave);
 
 		window.removeEventListener('resize', this.onResize);
@@ -181,6 +188,8 @@ export default class Slide {
 
 		this.controlsElement?.remove();
 		this.controlsElement = null;
+
+		this.wrapper.removeAttribute('tabindex');
 	}
 
 	// EVENTS
@@ -193,10 +202,12 @@ export default class Slide {
 		this.updatePosition = this.updatePosition.bind(this);
 		this.handleTransitionEnd = this.handleTransitionEnd.bind(this);
 		this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
+		this.handleKeyDown = this.handleKeyDown.bind(this);
 	}
 
 	private mainListener() {
 		this.wrapper.addEventListener('pointerdown', this.dragStart);
+		this.wrapper.addEventListener('keydown', this.handleKeyDown);
 		window.addEventListener('resize', this.onResize);
 		this.rail.addEventListener('transitionend', this.handleTransitionEnd);
 
@@ -522,8 +533,14 @@ export default class Slide {
 		if (!dots) return;
 
 		const currentIndex = this.getCurrentNavigationIndex();
+
 		dots.forEach((dot, index) => {
-			dot.toggleAttribute('data-active', index === currentIndex);
+			const active = index === currentIndex;
+
+			dot.toggleAttribute('data-active', active);
+
+			if (active) dot.setAttribute('aria-current', 'true');
+			else dot.removeAttribute('aria-current');
 		});
 	}
 
@@ -904,5 +921,26 @@ export default class Slide {
 		const calcDist = Math.round((clientX - this.distance.initial) * 1.1);
 
 		return this.distance.current + calcDist;
+	}
+
+	// ACCESSIBILITY
+
+	private handleKeyDown(e: KeyboardEvent) {
+		const target = e.target as HTMLElement;
+
+		if (
+			target instanceof HTMLInputElement ||
+			target instanceof HTMLTextAreaElement ||
+			target.isContentEditable
+		)
+			return;
+
+		if (e.key === 'ArrowLeft') {
+			this.prevSlide();
+			return;
+		}
+		if (e.key === 'ArrowRight') {
+			this.nextSlide();
+		}
 	}
 }
