@@ -424,17 +424,21 @@ svg {
 	transform: scale(1);
 }
 
-/* PAUSED */
+/* PAUSED — manual ou hover */
 
-[data-slide-autoplay][data-paused] [data-slide-autoplay-icon='play'] {
+[data-slide-autoplay][data-paused] [data-slide-autoplay-icon='play'],
+[data-slide-autoplay][data-hovering] [data-slide-autoplay-icon='play'] {
 	opacity: var(--slide-control-opacity);
 	transform: scale(1);
 }
 
-[data-slide-autoplay][data-paused] [data-slide-autoplay-icon='pause'] {
+[data-slide-autoplay][data-paused] [data-slide-autoplay-icon='pause'],
+[data-slide-autoplay][data-hovering] [data-slide-autoplay-icon='pause'] {
 	opacity: 0;
 	transform: scale(0.8);
 }
+
+/* HOVER */
 
 [data-slide-autoplay][data-hovering] {
 	animation: slide-autoplay-breathe 1.8s ease-in-out infinite;

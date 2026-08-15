@@ -223,6 +223,7 @@ export default class Slide {
 	}
 
 	private onResize() {
+		this.cancelTransition();
 		this.updatePosition(this.slideIndex);
 	}
 
@@ -681,44 +682,19 @@ export default class Slide {
 
 		controls.dataset.slideAutoplayControls = '';
 
-		this.createAutoplayButton(controls);
+		this.createAutoplayButton();
 
 		parent.append(controls);
 	}
 
-	private createAutoplayButton(parent: HTMLElement) {
+	private createAutoplayButton() {
 		const button = document.createElement('button');
 
 		button.type = 'button';
-		button.dataset.slideAutoplay = '';
+		button.setAttribute('data-slide-autoplay', '');
+		button.setAttribute('aria-label', 'pause autoplay');
 
-		const play = document.createElement('span');
-		const pause = document.createElement('span');
-
-		play.dataset.slideAutoplayIcon = 'play';
-		pause.dataset.slideAutoplayIcon = 'pause';
-
-		play.style.setProperty('--slide-autoplay-icon', `url("${playIcon}")`);
-
-		pause.style.setProperty('--slide-autoplay-icon', `url("${pauseIcon}")`);
-
-		button.append(play, pause);
-
-		button.addEventListener('click', () => {
-			this.isAutoplayPaused = !this.isAutoplayPaused;
-
-			if (this.isAutoplayPaused) {
-				this.pauseAutoplay();
-			} else {
-				this.resumeAutoplay();
-			}
-
-			this.updateAutoplayControl();
-		});
-
-		parent.append(button);
-
-		this.updateAutoplayControl();
+		return button;
 	}
 
 	private updateAutoplayControl() {
@@ -728,9 +704,7 @@ export default class Slide {
 
 		if (!button) return;
 
-		const paused =
-			this.isAutoplayPaused ||
-			(this.options.autoplay?.pauseOnHover && this.isHovering);
+		const paused = !this.canAutoplay();
 
 		button.toggleAttribute('data-paused', paused);
 		button.toggleAttribute('data-hovering', this.isHovering);
@@ -918,6 +892,13 @@ export default class Slide {
 			? `transform .${this.animationDuration / 100}s ease`
 			: 'none';
 		this.rail.style.transform = `translateX(${distX}px)`;
+	}
+
+	private cancelTransition() {
+		this.isAnimating = false;
+		this.loopDirection = null;
+		this.isLoopTransitioning = false;
+		this.rail.style.transition = 'none';
 	}
 
 	// CALCULATIONS
