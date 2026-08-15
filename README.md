@@ -47,7 +47,7 @@ A lightweight and customizable slider library built with **TypeScript**, focused
 Clone the repository:
 
 ```bash
-git clone https://github.com/CrystyanVerly/Slide.git
+git clone https://github.com/CrystyanVerly/TSlider.git
 ```
 
 Navigate to the project:
