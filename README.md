@@ -8,7 +8,7 @@ The library provides the core slider behavior without depending on a UI framewor
 
 ## 🌐 Live Demo
 
-[![Vercel](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://tslider.vercel.app)
+[![Vercel](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)]([https://tslider.vercel.app](https://tslider.vercel.app/))
 
 --
 
