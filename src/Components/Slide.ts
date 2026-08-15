@@ -74,12 +74,17 @@ export default class Slide {
 
 	private autoPlayTimer: number | null = null;
 	private isHovering = false;
-	private handleMouseEnter = () => {
+	private handlePointerEnter = (e: PointerEvent) => {
+		if (e.pointerType !== 'mouse') return;
+
 		this.isHovering = true;
 		this.pauseAutoplay();
 		this.updateAutoplayControl();
 	};
-	private handleMouseLeave = () => {
+
+	private handlePointerLeave = (e: PointerEvent) => {
+		if (e.pointerType !== 'mouse') return;
+
 		this.isHovering = false;
 		this.resumeAutoplay();
 		this.updateAutoplayControl();
@@ -123,10 +128,10 @@ export default class Slide {
 			},
 
 			autoplay: {
-				enabled: false,
+				enabled: true,
 				delay: 3000,
 				pauseOnHover: true,
-				controls: false,
+				controls: true,
 				...options.autoplay,
 			},
 		};
@@ -176,9 +181,8 @@ export default class Slide {
 
 		this.wrapper.removeEventListener('keydown', this.handleKeyDown);
 
-		this.wrapper.removeEventListener('mouseenter', this.handleMouseEnter);
-
-		this.wrapper.removeEventListener('mouseleave', this.handleMouseLeave);
+		this.wrapper.removeEventListener('pointerenter', this.handlePointerEnter);
+		this.wrapper.removeEventListener('pointerleave', this.handlePointerLeave);
 
 		window.removeEventListener('resize', this.onResize);
 		window.removeEventListener('pointerup', this.dragEnd);
@@ -216,9 +220,10 @@ export default class Slide {
 		this.rail.addEventListener('transitionend', this.handleTransitionEnd);
 
 		if (this.options.autoplay?.pauseOnHover) {
-			this.wrapper.addEventListener('mouseenter', this.handleMouseEnter);
-			this.wrapper.addEventListener('mouseleave', this.handleMouseLeave);
+			this.wrapper.addEventListener('pointerenter', this.handlePointerEnter);
+			this.wrapper.addEventListener('pointerleave', this.handlePointerLeave);
 		}
+
 		document.addEventListener('visibilitychange', this.handleVisibilityChange);
 	}
 
@@ -682,23 +687,49 @@ export default class Slide {
 
 		controls.dataset.slideAutoplayControls = '';
 
-		this.createAutoplayButton();
+		this.createAutoplayButton(controls);
 
 		parent.append(controls);
 	}
 
-	private createAutoplayButton() {
+	private createAutoplayButton(parent: HTMLElement) {
 		const button = document.createElement('button');
 
 		button.type = 'button';
-		button.setAttribute('data-slide-autoplay', '');
+		button.dataset.slideAutoplay = '';
 		button.setAttribute('aria-label', 'pause autoplay');
 
-		return button;
+		const play = document.createElement('span');
+		const pause = document.createElement('span');
+
+		play.dataset.slideAutoplayIcon = 'play';
+		pause.dataset.slideAutoplayIcon = 'pause';
+
+		play.style.setProperty('--slide-autoplay-icon', `url("${playIcon}")`);
+
+		pause.style.setProperty('--slide-autoplay-icon', `url("${pauseIcon}")`);
+
+		button.append(play, pause);
+
+		button.addEventListener('click', () => {
+			this.isAutoplayPaused = !this.isAutoplayPaused;
+
+			if (this.isAutoplayPaused) {
+				this.pauseAutoplay();
+			} else {
+				this.resumeAutoplay();
+			}
+
+			this.updateAutoplayControl();
+		});
+
+		parent.append(button);
+
+		this.updateAutoplayControl();
 	}
 
 	private updateAutoplayControl() {
-		const button = this.wrapper.querySelector<HTMLElement>(
+		const button = this.wrapper.querySelector<HTMLButtonElement>(
 			'[data-slide-autoplay]',
 		);
 

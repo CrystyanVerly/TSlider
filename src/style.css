@@ -126,14 +126,14 @@ svg {
    structure and must not be removed or renamed.
 */
 
-/* 
+/*
 	THEME
 
    Change ONLY these variables to modify the main
    control colors.
 
    Arrows and dots use the same color to remain
-   visually synchronized. 
+   visually synchronized.
 */
 
 :root {
@@ -155,6 +155,10 @@ svg {
 	inset: 0;
 
 	pointer-events: none;
+}
+
+[data-slide-controls] button {
+	-webkit-tap-highlight-color: transparent;
 }
 
 /* ARROWS */
@@ -215,13 +219,13 @@ svg {
 	cursor: default;
 }
 
-/* 
+/*
 	ARROW ICON
 
    The SVG is applied by Slide.ts through a CSS mask.
 
    The color comes from:
-   --slide-control-color 
+   --slide-control-color
 */
 
 [data-slide-arrow-icon] {
@@ -362,7 +366,7 @@ svg {
 	pointer-events: auto;
 }
 
-/* AUTOPLAY BUTTON*/
+/* AUTOPLAY BUTTON */
 
 [data-slide-autoplay] {
 	position: relative;
@@ -424,7 +428,7 @@ svg {
 	transform: scale(1);
 }
 
-/* PAUSED — manual ou hover */
+/* PAUSED — manual or hover */
 
 [data-slide-autoplay][data-paused] [data-slide-autoplay-icon='play'],
 [data-slide-autoplay][data-hovering] [data-slide-autoplay-icon='play'] {

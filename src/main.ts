@@ -16,7 +16,7 @@ const slide = new Slide({
 		autoplay: {
 			enabled: true,
 			pauseOnHover: true,
-			delay: 2000,
+			delay: 3000,
 			controls: true,
 		},
 	},

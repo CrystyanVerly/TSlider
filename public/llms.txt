@@ -1,0 +1,26 @@
+# tslider
+
+A lightweight and accessible image slider built with TypeScript.
+
+## Project
+
+tslider is a TypeScript-based image slider focused on accessibility,
+responsive behavior, keyboard navigation, autoplay controls, touch
+interaction, and smooth slide transitions.
+
+## Features
+
+- Keyboard navigation
+- Previous and next controls
+- Dot navigation
+- Autoplay
+- Pause on hover
+- Pause when the page is not visible
+- Reduced motion support
+- Touch and drag interaction
+- Responsive layout
+- Accessible controls
+
+## Links
+
+- [Website](https://github.com/CrystyanVerly/TSlider)
